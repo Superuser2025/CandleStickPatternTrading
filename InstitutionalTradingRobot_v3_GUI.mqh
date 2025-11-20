@@ -18,7 +18,7 @@ struct Button
     string setting;     // Which setting this controls
 };
 
-Button gui_buttons[25];
+Button gui_buttons[40];  // Increased for visual control buttons
 int button_count = 0;
 
 //+------------------------------------------------------------------+
@@ -173,6 +173,61 @@ void CreateInteractiveDashboard()
                       g_UseRegimeStrategy, clrLime, clrRed, "REGIME_STRATEGY");
     row++;
 
+    row++; // Spacing
+
+    // SECTION: VISUAL CONTROLS
+    CreateBigLabel("GUI_Visuals", x_start, y_start + row * (button_height + spacing),
+                   "─── CHART VISUALS ───", clrYellow, 12, false);
+    row++;
+
+    CreateToggleButton("BTN_SHOW_PATTERNS", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Pattern Boxes",
+                      g_ShowPatternBoxes, clrLime, clrGray, "SHOW_PATTERNS");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_LABELS", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Pattern Labels",
+                      g_ShowPatternLabels, clrLime, clrGray, "SHOW_LABELS");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_LIQ", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Liquidity Zones",
+                      g_ShowLiquidityZones, clrLime, clrGray, "SHOW_LIQ");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_FVG", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Fair Value Gaps",
+                      g_ShowFVGZones, clrLime, clrGray, "SHOW_FVG");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_OB", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Order Blocks",
+                      g_ShowOrderBlocks, clrLime, clrGray, "SHOW_OB");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_DASH", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Dashboard",
+                      g_ShowDashboard, clrLime, clrGray, "SHOW_DASH");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_COMM", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Commentary",
+                      g_ShowCommentary, clrLime, clrGray, "SHOW_COMM");
+    row++;
+
+    CreateToggleButton("BTN_SHOW_LEGEND", x_start, y_start + row * (button_height + spacing),
+                      button_width, button_height,
+                      "Color Legend",
+                      g_ShowColorLegend, clrLime, clrGray, "SHOW_LEGEND");
+    row++;
+
     // Update all button displays
     UpdateAllButtons();
 }
@@ -322,6 +377,15 @@ void UpdateSetting(string setting, bool value)
     else if(setting == "PATTERN_TRACK") g_UsePatternTracking = value;
     else if(setting == "ADAPTATION") g_UseParameterAdaptation = value;
     else if(setting == "REGIME_STRATEGY") g_UseRegimeStrategy = value;
+    // Visual toggles
+    else if(setting == "SHOW_PATTERNS") g_ShowPatternBoxes = value;
+    else if(setting == "SHOW_LABELS") g_ShowPatternLabels = value;
+    else if(setting == "SHOW_LIQ") g_ShowLiquidityZones = value;
+    else if(setting == "SHOW_FVG") g_ShowFVGZones = value;
+    else if(setting == "SHOW_OB") g_ShowOrderBlocks = value;
+    else if(setting == "SHOW_DASH") g_ShowDashboard = value;
+    else if(setting == "SHOW_COMM") g_ShowCommentary = value;
+    else if(setting == "SHOW_LEGEND") g_ShowColorLegend = value;
 }
 
 //+------------------------------------------------------------------+
@@ -329,6 +393,19 @@ void UpdateSetting(string setting, bool value)
 //+------------------------------------------------------------------+
 void DrawBigCommentary()
 {
+    string box_name = prefix + "Commentary_Box";
+
+    if(!g_ShowCommentary)
+    {
+        // Hide commentary
+        ObjectDelete(0, box_name);
+        for(int i = 0; i < 100; i++)
+        {
+            ObjectDelete(0, prefix + "C_" + IntegerToString(i));
+        }
+        return;
+    }
+
     int x = 320;  // Right side of buttons
     int y = 50;
     int width = 800;
@@ -336,7 +413,6 @@ void DrawBigCommentary()
     int max_lines = 30;
 
     // Background box
-    string box_name = prefix + "Commentary_Box";
     if(ObjectFind(0, box_name) < 0)
     {
         ObjectCreate(0, box_name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
@@ -385,6 +461,134 @@ void DrawBigCommentary()
         ObjectSetString(0, label_name, OBJPROP_TEXT, commentary_buffer[i].text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, commentary_buffer[i].text_color);
     }
+}
+
+//+------------------------------------------------------------------+
+//| DRAW COLOR LEGEND - Explains what each color means               |
+//+------------------------------------------------------------------+
+void DrawColorLegend()
+{
+    string legend_name = prefix + "Legend_BG";
+
+    if(!g_ShowColorLegend)
+    {
+        // Hide legend
+        ObjectDelete(0, legend_name);
+        for(int i = 0; i < 20; i++)
+        {
+            ObjectDelete(0, prefix + "Legend_" + IntegerToString(i));
+            ObjectDelete(0, prefix + "LegendBox_" + IntegerToString(i));
+        }
+        return;
+    }
+
+    int x = 20;
+    int y = 700;  // Bottom left
+    int width = 280;
+    int line_height = 22;
+
+    // Background box
+    if(ObjectFind(0, legend_name) < 0)
+    {
+        ObjectCreate(0, legend_name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, legend_name, OBJPROP_XDISTANCE, x);
+        ObjectSetInteger(0, legend_name, OBJPROP_YDISTANCE, y);
+        ObjectSetInteger(0, legend_name, OBJPROP_XSIZE, width);
+        ObjectSetInteger(0, legend_name, OBJPROP_YSIZE, 280);
+        ObjectSetInteger(0, legend_name, OBJPROP_BGCOLOR, C'20,20,30');
+        ObjectSetInteger(0, legend_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+        ObjectSetInteger(0, legend_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, legend_name, OBJPROP_BACK, false);
+    }
+
+    // Title
+    CreateLegendLabel(0, x+10, y+8, "═══ COLOR LEGEND ═══", clrWhite, 11, true);
+
+    int row = 1;
+
+    // Pattern colors
+    CreateColorBox(1, x+10, y+8 + row*line_height, clrLime);
+    CreateLegendLabel(1, x+30, y+8 + row*line_height, "Bullish Pattern", clrLime, 10, false);
+    row++;
+
+    CreateColorBox(2, x+10, y+8 + row*line_height, clrRed);
+    CreateLegendLabel(2, x+30, y+8 + row*line_height, "Bearish Pattern", clrRed, 10, false);
+    row++;
+
+    row++;  // Spacing
+
+    // Liquidity zones
+    CreateColorBox(3, x+10, y+8 + row*line_height, clrRed);
+    CreateLegendLabel(3, x+30, y+8 + row*line_height, "Liquidity High (Sell Side)", clrGold, 10, false);
+    row++;
+
+    CreateColorBox(4, x+10, y+8 + row*line_height, clrBlue);
+    CreateLegendLabel(4, x+30, y+8 + row*line_height, "Liquidity Low (Buy Side)", clrDodgerBlue, 10, false);
+    row++;
+
+    row++;  // Spacing
+
+    // Fair Value Gaps
+    CreateColorBox(5, x+10, y+8 + row*line_height, clrLightGreen);
+    CreateLegendLabel(5, x+30, y+8 + row*line_height, "Bullish FVG (Gap Up)", clrLightGreen, 10, false);
+    row++;
+
+    CreateColorBox(6, x+10, y+8 + row*line_height, clrLightPink);
+    CreateLegendLabel(6, x+30, y+8 + row*line_height, "Bearish FVG (Gap Down)", clrLightPink, 10, false);
+    row++;
+
+    row++;  // Spacing
+
+    // Order Blocks
+    CreateColorBox(7, x+10, y+8 + row*line_height, C'0,100,0');
+    CreateLegendLabel(7, x+30, y+8 + row*line_height, "Bullish Order Block", C'0,200,0', 10, false);
+    row++;
+
+    CreateColorBox(8, x+10, y+8 + row*line_height, clrCrimson);
+    CreateLegendLabel(8, x+30, y+8 + row*line_height, "Bearish Order Block", clrCrimson, 10, false);
+}
+
+//+------------------------------------------------------------------+
+//| CREATE COLOR BOX (Small colored square for legend)               |
+//+------------------------------------------------------------------+
+void CreateColorBox(int index, int x, int y, color clr)
+{
+    string name = prefix + "LegendBox_" + IntegerToString(index);
+
+    if(ObjectFind(0, name) < 0)
+    {
+        ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+    }
+
+    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
+    ObjectSetInteger(0, name, OBJPROP_XSIZE, 15);
+    ObjectSetInteger(0, name, OBJPROP_YSIZE, 15);
+    ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clr);
+    ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+}
+
+//+------------------------------------------------------------------+
+//| CREATE LEGEND LABEL                                              |
+//+------------------------------------------------------------------+
+void CreateLegendLabel(int index, int x, int y, string text, color clr, int font_size, bool bold)
+{
+    string name = prefix + "Legend_" + IntegerToString(index);
+
+    if(ObjectFind(0, name) < 0)
+    {
+        ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+        ObjectSetString(0, name, OBJPROP_FONT, bold ? "Arial Bold" : "Arial");
+        ObjectSetInteger(0, name, OBJPROP_FONTSIZE, font_size);
+    }
+
+    ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
+    ObjectSetString(0, name, OBJPROP_TEXT, text);
+    ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
 }
 
 //+------------------------------------------------------------------+

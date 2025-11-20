@@ -45,6 +45,19 @@ void UpdateDashboard()
 //+------------------------------------------------------------------+
 void DrawDashboard()
 {
+    if(!g_ShowDashboard)
+    {
+        // Hide dashboard
+        string bg_name = prefix + "Dashboard_BG";
+        ObjectDelete(0, bg_name);
+        // Delete all dashboard labels too
+        for(int i = 0; i < 100; i++)
+        {
+            ObjectDelete(0, prefix + "D_" + IntegerToString(i));
+        }
+        return;
+    }
+
     // Dashboard now appears on right side, below buttons
     int x = 1150;  // Right side
     int y = 50;
@@ -332,6 +345,17 @@ void CreateLabel(string name, int x, int y, string text, color clr, int font_siz
 //+------------------------------------------------------------------+
 void DrawLiquidityZones()
 {
+    if(!g_ShowLiquidityZones)
+    {
+        // Hide all liquidity zones
+        for(int i = 0; i < liquidity_count; i++)
+        {
+            string name = prefix + "LIQ_" + IntegerToString(i);
+            ObjectDelete(0, name);
+        }
+        return;
+    }
+
     for(int i = 0; i < liquidity_count; i++)
     {
         string name = prefix + "LIQ_" + IntegerToString(i);
@@ -354,6 +378,17 @@ void DrawLiquidityZones()
 //+------------------------------------------------------------------+
 void DrawFVGZones()
 {
+    if(!g_ShowFVGZones)
+    {
+        // Hide all FVG zones
+        for(int i = 0; i < fvg_count; i++)
+        {
+            string name = prefix + "FVG_" + IntegerToString(i);
+            ObjectDelete(0, name);
+        }
+        return;
+    }
+
     for(int i = 0; i < fvg_count; i++)
     {
         if(fvg_zones[i].filled) continue;
@@ -383,6 +418,17 @@ void DrawFVGZones()
 //+------------------------------------------------------------------+
 void DrawOrderBlocks()
 {
+    if(!g_ShowOrderBlocks)
+    {
+        // Hide all order blocks
+        for(int i = 0; i < ob_count; i++)
+        {
+            string name = prefix + "OB_" + IntegerToString(i);
+            ObjectDelete(0, name);
+        }
+        return;
+    }
+
     for(int i = 0; i < ob_count; i++)
     {
         if(order_blocks[i].invalidated) continue;
@@ -412,14 +458,20 @@ void DrawOrderBlocks()
 //+------------------------------------------------------------------+
 void DrawPatternBox(PatternInfo &p)
 {
+    datetime time = iTime(_Symbol, PreferredTimeframe, p.bar_index);
+    string name = prefix + "BOX_" + TimeToString(time);
+
+    if(!g_ShowPatternBoxes)
+    {
+        ObjectDelete(0, name);
+        return;
+    }
+
     double atr_buffer[];
     ArraySetAsSeries(atr_buffer, true);
     if(CopyBuffer(h_ATR, 0, 0, 1, atr_buffer) <= 0) return;
 
     double atr = atr_buffer[0];
-    datetime time = iTime(_Symbol, PreferredTimeframe, p.bar_index);
-    string name = prefix + "BOX_" + TimeToString(time);
-
     double top = p.price + atr;
     double bottom = p.price - atr;
     datetime time_end = time + PeriodSeconds(PreferredTimeframe);
@@ -443,6 +495,12 @@ void DrawPatternLabel(PatternInfo &p)
 {
     datetime time = iTime(_Symbol, PreferredTimeframe, p.bar_index);
     string name = prefix + "LABEL_" + TimeToString(time);
+
+    if(!g_ShowPatternLabels)
+    {
+        ObjectDelete(0, name);
+        return;
+    }
 
     double price = p.is_bullish ?
                   iLow(_Symbol, PreferredTimeframe, p.bar_index) - 10 * _Point :

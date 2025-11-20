@@ -113,6 +113,16 @@ bool g_UsePatternTracking;
 bool g_UseParameterAdaptation;
 bool g_UseRegimeStrategy;
 
+// Visual toggles (GUI-controllable - turn chart colors on/off)
+bool g_ShowPatternBoxes = true;
+bool g_ShowPatternLabels = true;
+bool g_ShowLiquidityZones = true;
+bool g_ShowFVGZones = true;
+bool g_ShowOrderBlocks = true;
+bool g_ShowDashboard = true;
+bool g_ShowCommentary = true;
+bool g_ShowColorLegend = true;
+
 //+------------------------------------------------------------------+
 //| INDICATOR HANDLES                                                 |
 //+------------------------------------------------------------------+
@@ -708,13 +718,10 @@ void OnTick()
     if(active_ob > 0)
         AddComment("Order Blocks: " + IntegerToString(active_ob) + " active", clrAqua, PRIORITY_INFO);
 
-    // Draw zones if in indicator mode
-    if(IndicatorMode || ShowDashboard)
-    {
-        DrawLiquidityZones();
-        DrawFVGZones();
-        DrawOrderBlocks();
-    }
+    // Draw zones (functions check their own toggles)
+    DrawLiquidityZones();
+    DrawFVGZones();
+    DrawOrderBlocks();
 
     //═══════════════════════════════════════════════════════════════
     // PHASE 3: PATTERN DETECTION
@@ -835,8 +842,9 @@ void OnTick()
                 has_active_pattern = false;
                 // Skip further analysis
                 UpdateDashboard();
-                if(ShowDashboard) DrawDashboard();
-                if(ShowCommentary) DrawCommentary();
+                DrawDashboard();  // Checks g_ShowDashboard internally
+                DrawBigCommentary();  // Checks g_ShowCommentary internally
+                DrawColorLegend();  // Checks g_ShowColorLegend internally
                 return;
             }
         }
@@ -947,10 +955,13 @@ void OnTick()
 
     // Update & Draw Dashboard
     UpdateDashboard();
-    if(ShowDashboard) DrawDashboard();
+    DrawDashboard();  // Function checks g_ShowDashboard internally
 
     // Draw BIG READABLE Commentary
-    if(ShowCommentary) DrawBigCommentary();
+    DrawBigCommentary();  // Function checks g_ShowCommentary internally
+
+    // Draw Color Legend
+    DrawColorLegend();  // Function checks g_ShowColorLegend internally
 }
 
 //+------------------------------------------------------------------+
@@ -1019,7 +1030,7 @@ ENUM_TIMEFRAMES GetHigherTimeframe(ENUM_TIMEFRAMES current)
 //+------------------------------------------------------------------+
 void AddComment(string text, color text_color, int priority)
 {
-    if(!ShowCommentary) return;
+    if(!g_ShowCommentary) return;
 
     // Shift buffer if full
     if(commentary_count >= 50)
