@@ -400,6 +400,40 @@ double              dynamic_tp1 = 2.0;
 string              prefix = "IGTR3_";
 
 //+------------------------------------------------------------------+
+//| Add Commentary Line (must be defined before includes)            |
+//+------------------------------------------------------------------+
+void AddComment(string text, color text_color, int priority)
+{
+    if(!g_ShowCommentary) return;
+
+    // Shift buffer if full
+    if(commentary_count >= 50)
+    {
+        for(int i = 0; i < 49; i++)
+            commentary_buffer[i] = commentary_buffer[i+1];
+        commentary_count = 49;
+    }
+
+    commentary_buffer[commentary_count].text = text;
+    commentary_buffer[commentary_count].text_color = text_color;
+    commentary_buffer[commentary_count].timestamp = TimeCurrent();
+    commentary_buffer[commentary_count].priority = priority;
+    commentary_count++;
+
+    // Print critical messages to terminal
+    if(priority == PRIORITY_CRITICAL)
+        Print(">>> ", text);
+}
+
+//+------------------------------------------------------------------+
+//| INCLUDE SUPPORTING MODULES                                        |
+//+------------------------------------------------------------------+
+#include "InstitutionalTradingRobot_v3_Functions.mqh"
+#include "InstitutionalTradingRobot_v3_Trading.mqh"
+#include "InstitutionalTradingRobot_v3_Visual.mqh"
+#include "InstitutionalTradingRobot_v3_GUI.mqh"
+
+//+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit()
@@ -1024,41 +1058,6 @@ ENUM_TIMEFRAMES GetHigherTimeframe(ENUM_TIMEFRAMES current)
         default:         return PERIOD_D1;
     }
 }
-
-//+------------------------------------------------------------------+
-//| Add Commentary Line                                               |
-//+------------------------------------------------------------------+
-void AddComment(string text, color text_color, int priority)
-{
-    if(!g_ShowCommentary) return;
-
-    // Shift buffer if full
-    if(commentary_count >= 50)
-    {
-        for(int i = 0; i < 49; i++)
-            commentary_buffer[i] = commentary_buffer[i+1];
-        commentary_count = 49;
-    }
-
-    commentary_buffer[commentary_count].text = text;
-    commentary_buffer[commentary_count].text_color = text_color;
-    commentary_buffer[commentary_count].timestamp = TimeCurrent();
-    commentary_buffer[commentary_count].priority = priority;
-    commentary_count++;
-
-    // Print critical messages to terminal
-    if(priority == PRIORITY_CRITICAL)
-        Print(">>> ", text);
-}
-
-//+------------------------------------------------------------------+
-//+------------------------------------------------------------------+
-//| INCLUDE SUPPORTING MODULES                                        |
-//+------------------------------------------------------------------+
-#include "InstitutionalTradingRobot_v3_Functions.mqh"
-#include "InstitutionalTradingRobot_v3_Trading.mqh"
-#include "InstitutionalTradingRobot_v3_Visual.mqh"
-#include "InstitutionalTradingRobot_v3_GUI.mqh"
 
 //+------------------------------------------------------------------+
 //| Chart Event Handler - FOR BUTTON CLICKS                          |
