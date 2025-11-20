@@ -45,10 +45,11 @@ void UpdateDashboard()
 //+------------------------------------------------------------------+
 void DrawDashboard()
 {
-    int x = Dashboard_X;
-    int y = Dashboard_Y;
-    int width = 500;
-    int line_height = 18;
+    // Dashboard now appears on right side, below buttons
+    int x = 1150;  // Right side
+    int y = 50;
+    int width = 400;
+    int line_height = 22;  // BIGGER line height
 
     // Background box
     string bg_name = prefix + "Dashboard_BG";
@@ -67,15 +68,15 @@ void DrawDashboard()
 
     // Title
     CreateLabel("Title", x+10, y+10,
-               "═══ INSTITUTIONAL TRADING ROBOT v3.0 ═══",
-               clrWhite, 10);
+               "═══ MARKET STATUS ═══",
+               clrWhite, 13);
 
     int row = 0;
 
     // Market Context Section
     row++;
     CreateLabel("Header1", x+10, y+40+row*line_height,
-               "── MARKET CONTEXT ──", clrAqua, FontSize);
+               "── MARKET CONTEXT ──", clrAqua, 12);
     row++;
 
     string regime_text = "Regime: ";
@@ -146,7 +147,7 @@ void DrawDashboard()
     // Filters Section
     row++;
     CreateLabel("Header2", x+10, y+40+row*line_height,
-               "── INSTITUTIONAL FILTERS ──", clrAqua, FontSize);
+               "── FILTER STATUS ──", clrAqua, 12);
     row++;
 
     CreateLabel("Volume", x+10, y+40+row*line_height,
@@ -182,7 +183,7 @@ void DrawDashboard()
     // Risk Section
     row++;
     CreateLabel("Header3", x+10, y+40+row*line_height,
-               "── RISK METRICS ──", clrAqua, FontSize);
+               "── RISK METRICS ──", clrAqua, 12);
     row++;
 
     CreateLabel("Risk", x+10, y+40+row*line_height,
@@ -211,7 +212,7 @@ void DrawDashboard()
     {
         row++;
         CreateLabel("Header4", x+10, y+40+row*line_height,
-                   "── ACTIVE PATTERN ──", clrAqua, FontSize);
+                   "── ACTIVE PATTERN ──", clrAqua, 12);
         row++;
 
         CreateLabel("Pattern", x+10, y+40+row*line_height,
@@ -232,7 +233,7 @@ void DrawDashboard()
     {
         row++;
         CreateLabel("Header5", x+10, y+40+row*line_height,
-                   "── PERFORMANCE ──", clrAqua, FontSize);
+                   "── PERFORMANCE ──", clrAqua, 12);
         row++;
 
         CreateLabel("WinRate", x+10, y+40+row*line_height,
@@ -241,17 +242,17 @@ void DrawDashboard()
         row++;
     }
 
-    // Mode Indicator
+    // Mode Indicator - now shown via button, can skip or make smaller
     row++;
     if(!EnableTrading)
     {
         CreateLabel("Mode", x+10, y+40+row*line_height,
-                   "⚠ INDICATOR MODE - NOT TRADING ⚠", clrOrange, FontSize+1);
+                   "⚠ INDICATOR MODE ⚠", clrOrange, 13);
     }
     else
     {
         CreateLabel("Mode", x+10, y+40+row*line_height,
-                   "✓ AUTO-TRADING ACTIVE", clrLime, FontSize+1);
+                   "✓ TRADING ACTIVE", clrLime, 13);
     }
 }
 
@@ -307,7 +308,7 @@ void DrawCommentary()
 //+------------------------------------------------------------------+
 //| CREATE DASHBOARD LABEL                                           |
 //+------------------------------------------------------------------+
-void CreateLabel(string name, int x, int y, string text, color clr, int font_size = 9)
+void CreateLabel(string name, int x, int y, string text, color clr, int font_size = 11)
 {
     string label_name = prefix + "DB_" + name;
 
@@ -316,7 +317,7 @@ void CreateLabel(string name, int x, int y, string text, color clr, int font_siz
         ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
         ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
-        ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");
+        ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");  // More readable
         ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, font_size);
     }
 

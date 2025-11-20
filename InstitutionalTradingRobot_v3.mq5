@@ -425,6 +425,12 @@ int OnInit()
     }
 
     Print("✓ All systems operational");
+
+    // Create interactive GUI with clickable buttons
+    CreateInteractiveDashboard();
+
+    Print("✓ Interactive GUI created - Click buttons to toggle settings!");
+
     return INIT_SUCCEEDED;
 }
 
@@ -900,8 +906,8 @@ void OnTick()
     UpdateDashboard();
     if(ShowDashboard) DrawDashboard();
 
-    // Draw Commentary
-    if(ShowCommentary) DrawCommentary();
+    // Draw BIG READABLE Commentary
+    if(ShowCommentary) DrawBigCommentary();
 }
 
 //+------------------------------------------------------------------+
@@ -998,6 +1004,49 @@ void AddComment(string text, color text_color, int priority)
 #include "InstitutionalTradingRobot_v3_Functions.mqh"
 #include "InstitutionalTradingRobot_v3_Trading.mqh"
 #include "InstitutionalTradingRobot_v3_Visual.mqh"
+#include "InstitutionalTradingRobot_v3_GUI.mqh"
+
+//+------------------------------------------------------------------+
+//| Chart Event Handler - FOR BUTTON CLICKS                          |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id,
+                  const long &lparam,
+                  const double &dparam,
+                  const string &sparam)
+{
+    // Mouse click event
+    if(id == CHARTEVENT_OBJECT_CLICK)
+    {
+        Print("Object clicked: ", sparam);
+    }
+
+    // Mouse button down - for button detection
+    if(id == CHARTEVENT_MOUSE_MOVE)
+    {
+        int x = (int)lparam;
+        int y = (int)dparam;
+
+        // Check if mouse button is pressed
+        static bool mouse_was_pressed = false;
+        bool mouse_pressed = (dparam > 0);  // Mouse button state
+
+        // On click (button release)
+        if(mouse_was_pressed && !mouse_pressed)
+        {
+            HandleButtonClick(x, y);
+        }
+
+        mouse_was_pressed = mouse_pressed;
+    }
+
+    // Better: Use OBJECT_CLICK
+    if(id == CHARTEVENT_CLICK)
+    {
+        int x = (int)lparam;
+        int y = (int)dparam;
+        HandleButtonClick(x, y);
+    }
+}
 
 //+------------------------------------------------------------------+
 //|                      END OF EA                                    |
