@@ -45,7 +45,7 @@ void ScanForCandlestickPatterns()
         has_active_pattern = true;
 
         // FIX #19: Apply Regime-Specific Strategy
-        if(UseRegimeStrategy)
+        if(g_UseRegimeStrategy)
             ApplyRegimeStrategy();
     }
     else
@@ -72,7 +72,7 @@ bool IsPatternValid()
 //+------------------------------------------------------------------+
 void ApplyRegimeStrategy()
 {
-    if(!UseRegimeStrategy) return;
+    if(!g_UseRegimeStrategy) return;
 
     switch(current_regime)
     {
@@ -147,68 +147,68 @@ TradeDecision EvaluateTradeDecision()
     }
 
     // 3. Volume (FIX #1)
-    if(UseVolumeFilter && volume_data.above_threshold)
+    if(g_UseVolumeFilter && volume_data.above_threshold)
     {
         decision.confluence_score++;
         decision.passed_filters[decision.passed_count++] = "Volume: Above Threshold";
     }
-    else if(UseVolumeFilter)
+    else if(g_UseVolumeFilter)
     {
         decision.failed_filters[decision.failed_count++] = "Volume: Below Threshold";
     }
 
     // 4. Spread (FIX #2)
-    if(UseSpreadFilter && spread_data.acceptable)
+    if(g_UseSpreadFilter && spread_data.acceptable)
     {
         decision.confluence_score++;
         decision.passed_filters[decision.passed_count++] = "Spread: Acceptable";
     }
-    else if(UseSpreadFilter)
+    else if(g_UseSpreadFilter)
     {
         decision.failed_filters[decision.failed_count++] = "Spread: Too Wide";
     }
 
     // 5. Session (FIX #6)
-    if(UseSessionFilter && session_data.is_tradeable)
+    if(g_UseSessionFilter && session_data.is_tradeable)
     {
         decision.confluence_score++;
         decision.passed_filters[decision.passed_count++] = "Session: Active";
     }
-    else if(UseSessionFilter)
+    else if(g_UseSessionFilter)
     {
         decision.failed_filters[decision.failed_count++] = "Session: Not Tradeable";
     }
 
     // 6. News (FIX #8)
     bool news_clear = (news_count == 0);
-    if(UseNewsFilter && news_clear)
+    if(g_UseNewsFilter && news_clear)
     {
         decision.confluence_score++;
         decision.passed_filters[decision.passed_count++] = "News: Clear";
     }
-    else if(UseNewsFilter)
+    else if(g_UseNewsFilter)
     {
         decision.failed_filters[decision.failed_count++] = "News: High Impact Near";
     }
 
     // 7. MTF (FIX #5)
-    if(UseMTFConfirmation && dashboard.mtf_ok)
+    if(g_UseMTFConfirmation && dashboard.mtf_ok)
     {
         decision.confluence_score++;
         decision.passed_filters[decision.passed_count++] = "MTF: Aligned";
     }
-    else if(UseMTFConfirmation)
+    else if(g_UseMTFConfirmation)
     {
         decision.failed_filters[decision.failed_count++] = "MTF: Conflicting";
     }
 
     // 8. Correlation (FIX #7)
-    if(UseCorrelationFilter && dashboard.correlation_ok)
+    if(g_UseCorrelationFilter && dashboard.correlation_ok)
     {
         decision.confluence_score++;
         decision.passed_filters[decision.passed_count++] = "Correlation: OK";
     }
-    else if(UseCorrelationFilter)
+    else if(g_UseCorrelationFilter)
     {
         decision.failed_filters[decision.failed_count++] = "Correlation: Overexposed";
     }
@@ -225,7 +225,7 @@ TradeDecision EvaluateTradeDecision()
     }
 
     // 10. Historical Performance (FIX #17)
-    if(UsePatternTracking)
+    if(g_UsePatternTracking)
     {
         bool historically_profitable = CheckPatternHistory();
         if(historically_profitable)

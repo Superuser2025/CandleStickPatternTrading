@@ -46,8 +46,8 @@ void CreateInteractiveDashboard()
     // MODE TOGGLE - BIG AND OBVIOUS
     CreateToggleButton("BTN_MODE", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
-                      EnableTrading ? "MODE: AUTO TRADING ✓" : "MODE: INDICATOR ONLY",
-                      EnableTrading, clrLime, clrOrange, "MODE");
+                      g_EnableTrading ? "MODE: AUTO TRADING ✓" : "MODE: INDICATOR ONLY",
+                      g_EnableTrading, clrLime, clrOrange, "MODE");
     row++;
 
     row++; // Spacing
@@ -60,61 +60,61 @@ void CreateInteractiveDashboard()
     CreateToggleButton("BTN_VOLUME", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Volume Filter",
-                      UseVolumeFilter, clrLime, clrRed, "VOLUME");
+                      g_UseVolumeFilter, clrLime, clrRed, "VOLUME");
     row++;
 
     CreateToggleButton("BTN_SPREAD", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Spread Filter",
-                      UseSpreadFilter, clrLime, clrRed, "SPREAD");
+                      g_UseSpreadFilter, clrLime, clrRed, "SPREAD");
     row++;
 
     CreateToggleButton("BTN_SLIPPAGE", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Slippage Model",
-                      UseSlippageModel, clrLime, clrRed, "SLIPPAGE");
+                      g_UseSlippageModel, clrLime, clrRed, "SLIPPAGE");
     row++;
 
     CreateToggleButton("BTN_MTF", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Multi-Timeframe Confirm",
-                      UseMTFConfirmation, clrLime, clrRed, "MTF");
+                      g_UseMTFConfirmation, clrLime, clrRed, "MTF");
     row++;
 
     CreateToggleButton("BTN_SESSION", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Session Filter",
-                      UseSessionFilter, clrLime, clrRed, "SESSION");
+                      g_UseSessionFilter, clrLime, clrRed, "SESSION");
     row++;
 
     CreateToggleButton("BTN_CORRELATION", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Correlation Filter",
-                      UseCorrelationFilter, clrLime, clrRed, "CORRELATION");
+                      g_UseCorrelationFilter, clrLime, clrRed, "CORRELATION");
     row++;
 
     CreateToggleButton("BTN_NEWS", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "News Filter",
-                      UseNewsFilter, clrLime, clrRed, "NEWS");
+                      g_UseNewsFilter, clrLime, clrRed, "NEWS");
     row++;
 
     CreateToggleButton("BTN_VOLATILITY", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Volatility Adaptation",
-                      UseVolatilityAdaptation, clrLime, clrRed, "VOLATILITY");
+                      g_UseVolatilityAdaptation, clrLime, clrRed, "VOLATILITY");
     row++;
 
     CreateToggleButton("BTN_DYNAMIC_RISK", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Dynamic Risk",
-                      UseDynamicRisk, clrLime, clrRed, "DYNAMIC_RISK");
+                      g_UseDynamicRisk, clrLime, clrRed, "DYNAMIC_RISK");
     row++;
 
     CreateToggleButton("BTN_PATTERN_DECAY", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Pattern Decay",
-                      UsePatternDecay, clrLime, clrRed, "PATTERN_DECAY");
+                      g_UsePatternDecay, clrLime, clrRed, "PATTERN_DECAY");
     row++;
 
     row++; // Spacing
@@ -127,25 +127,25 @@ void CreateInteractiveDashboard()
     CreateToggleButton("BTN_LIQUIDITY", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Liquidity Sweep",
-                      UseLiquiditySweep, clrLime, clrRed, "LIQUIDITY");
+                      g_UseLiquiditySweep, clrLime, clrRed, "LIQUIDITY");
     row++;
 
     CreateToggleButton("BTN_RETAIL_TRAP", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Retail Trap Detection",
-                      UseRetailTrap, clrLime, clrRed, "RETAIL_TRAP");
+                      g_UseRetailTrap, clrLime, clrRed, "RETAIL_TRAP");
     row++;
 
     CreateToggleButton("BTN_OB_INVALID", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Order Block Invalidation",
-                      UseOrderBlockInvalidation, clrLime, clrRed, "OB_INVALID");
+                      g_UseOrderBlockInvalidation, clrLime, clrRed, "OB_INVALID");
     row++;
 
     CreateToggleButton("BTN_STRUCTURE", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Market Structure",
-                      UseMarketStructure, clrLime, clrRed, "STRUCTURE");
+                      g_UseMarketStructure, clrLime, clrRed, "STRUCTURE");
     row++;
 
     row++; // Spacing
@@ -158,19 +158,19 @@ void CreateInteractiveDashboard()
     CreateToggleButton("BTN_PATTERN_TRACK", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Pattern Performance Tracking",
-                      UsePatternTracking, clrLime, clrRed, "PATTERN_TRACK");
+                      g_UsePatternTracking, clrLime, clrRed, "PATTERN_TRACK");
     row++;
 
     CreateToggleButton("BTN_ADAPTATION", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Parameter Adaptation",
-                      UseParameterAdaptation, clrLime, clrRed, "ADAPTATION");
+                      g_UseParameterAdaptation, clrLime, clrRed, "ADAPTATION");
     row++;
 
     CreateToggleButton("BTN_REGIME_STRATEGY", x_start, y_start + row * (button_height + spacing),
                       button_width, button_height,
                       "Regime Strategy",
-                      UseRegimeStrategy, clrLime, clrRed, "REGIME_STRATEGY");
+                      g_UseRegimeStrategy, clrLime, clrRed, "REGIME_STRATEGY");
     row++;
 
     // Update all button displays
@@ -293,34 +293,35 @@ void HandleButtonClick(int x, int y)
 
 //+------------------------------------------------------------------+
 //| UPDATE ACTUAL SETTING VARIABLE                                   |
+//| NOTE: Updates shadow global variables (g_*) not input parameters |
 //+------------------------------------------------------------------+
 void UpdateSetting(string setting, bool value)
 {
     if(setting == "MODE")
     {
-        EnableTrading = value;
+        g_EnableTrading = value;
         if(value)
             AddComment("⚠ AUTO-TRADING ENABLED - EA will execute trades!", clrRed, PRIORITY_CRITICAL);
         else
             AddComment("✓ Switched to INDICATOR MODE - No trading", clrLime, PRIORITY_CRITICAL);
     }
-    else if(setting == "VOLUME") UseVolumeFilter = value;
-    else if(setting == "SPREAD") UseSpreadFilter = value;
-    else if(setting == "SLIPPAGE") UseSlippageModel = value;
-    else if(setting == "MTF") UseMTFConfirmation = value;
-    else if(setting == "SESSION") UseSessionFilter = value;
-    else if(setting == "CORRELATION") UseCorrelationFilter = value;
-    else if(setting == "NEWS") UseNewsFilter = value;
-    else if(setting == "VOLATILITY") UseVolatilityAdaptation = value;
-    else if(setting == "DYNAMIC_RISK") UseDynamicRisk = value;
-    else if(setting == "PATTERN_DECAY") UsePatternDecay = value;
-    else if(setting == "LIQUIDITY") UseLiquiditySweep = value;
-    else if(setting == "RETAIL_TRAP") UseRetailTrap = value;
-    else if(setting == "OB_INVALID") UseOrderBlockInvalidation = value;
-    else if(setting == "STRUCTURE") UseMarketStructure = value;
-    else if(setting == "PATTERN_TRACK") UsePatternTracking = value;
-    else if(setting == "ADAPTATION") UseParameterAdaptation = value;
-    else if(setting == "REGIME_STRATEGY") UseRegimeStrategy = value;
+    else if(setting == "VOLUME") g_UseVolumeFilter = value;
+    else if(setting == "SPREAD") g_UseSpreadFilter = value;
+    else if(setting == "SLIPPAGE") g_UseSlippageModel = value;
+    else if(setting == "MTF") g_UseMTFConfirmation = value;
+    else if(setting == "SESSION") g_UseSessionFilter = value;
+    else if(setting == "CORRELATION") g_UseCorrelationFilter = value;
+    else if(setting == "NEWS") g_UseNewsFilter = value;
+    else if(setting == "VOLATILITY") g_UseVolatilityAdaptation = value;
+    else if(setting == "DYNAMIC_RISK") g_UseDynamicRisk = value;
+    else if(setting == "PATTERN_DECAY") g_UsePatternDecay = value;
+    else if(setting == "LIQUIDITY") g_UseLiquiditySweep = value;
+    else if(setting == "RETAIL_TRAP") g_UseRetailTrap = value;
+    else if(setting == "OB_INVALID") g_UseOrderBlockInvalidation = value;
+    else if(setting == "STRUCTURE") g_UseMarketStructure = value;
+    else if(setting == "PATTERN_TRACK") g_UsePatternTracking = value;
+    else if(setting == "ADAPTATION") g_UseParameterAdaptation = value;
+    else if(setting == "REGIME_STRATEGY") g_UseRegimeStrategy = value;
 }
 
 //+------------------------------------------------------------------+

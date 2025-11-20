@@ -398,7 +398,7 @@ void DetectOrderBlocks()
     }
 
     // FIX #15: Update Order Block Invalidation
-    if(UseOrderBlockInvalidation)
+    if(g_UseOrderBlockInvalidation)
         UpdateOrderBlockInvalidation();
 }
 

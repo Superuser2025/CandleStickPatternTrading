@@ -244,7 +244,7 @@ void DrawDashboard()
 
     // Mode Indicator - now shown via button, can skip or make smaller
     row++;
-    if(!EnableTrading)
+    if(!g_EnableTrading)
     {
         CreateLabel("Mode", x+10, y+40+row*line_height,
                    "⚠ INDICATOR MODE ⚠", clrOrange, 13);

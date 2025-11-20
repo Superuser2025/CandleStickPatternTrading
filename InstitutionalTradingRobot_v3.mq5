@@ -91,6 +91,29 @@ CPositionInfo  position;
 CAccountInfo   account;
 
 //+------------------------------------------------------------------+
+//| RUNTIME MODIFIABLE SETTINGS (Shadow Variables for GUI)           |
+//| Input parameters are constants - these can be modified by GUI    |
+//+------------------------------------------------------------------+
+bool g_EnableTrading;
+bool g_UseVolumeFilter;
+bool g_UseSpreadFilter;
+bool g_UseSlippageModel;
+bool g_UseMTFConfirmation;
+bool g_UseSessionFilter;
+bool g_UseCorrelationFilter;
+bool g_UseNewsFilter;
+bool g_UseVolatilityAdaptation;
+bool g_UseDynamicRisk;
+bool g_UsePatternDecay;
+bool g_UseLiquiditySweep;
+bool g_UseRetailTrap;
+bool g_UseOrderBlockInvalidation;
+bool g_UseMarketStructure;
+bool g_UsePatternTracking;
+bool g_UseParameterAdaptation;
+bool g_UseRegimeStrategy;
+
+//+------------------------------------------------------------------+
 //| INDICATOR HANDLES                                                 |
 //+------------------------------------------------------------------+
 int h_EMA_200;              // 200 EMA for regime detection
@@ -381,6 +404,26 @@ int OnInit()
     trade.SetDeviationInPoints(10);
     trade.SetTypeFilling(ORDER_FILLING_FOK);
 
+    // Initialize shadow variables from input parameters (GUI can modify these)
+    g_EnableTrading = EnableTrading;
+    g_UseVolumeFilter = UseVolumeFilter;
+    g_UseSpreadFilter = UseSpreadFilter;
+    g_UseSlippageModel = UseSlippageModel;
+    g_UseMTFConfirmation = UseMTFConfirmation;
+    g_UseSessionFilter = UseSessionFilter;
+    g_UseCorrelationFilter = UseCorrelationFilter;
+    g_UseNewsFilter = UseNewsFilter;
+    g_UseVolatilityAdaptation = UseVolatilityAdaptation;
+    g_UseDynamicRisk = UseDynamicRisk;
+    g_UsePatternDecay = UsePatternDecay;
+    g_UseLiquiditySweep = UseLiquiditySweep;
+    g_UseRetailTrap = UseRetailTrap;
+    g_UseOrderBlockInvalidation = UseOrderBlockInvalidation;
+    g_UseMarketStructure = UseMarketStructure;
+    g_UsePatternTracking = UsePatternTracking;
+    g_UseParameterAdaptation = UseParameterAdaptation;
+    g_UseRegimeStrategy = UseRegimeStrategy;
+
     // Initialize indicators
     if(!InitializeIndicators())
     {
@@ -406,7 +449,7 @@ int OnInit()
     AddComment("Timeframe: " + EnumToString(PreferredTimeframe), clrYellow, PRIORITY_IMPORTANT);
     AddComment("20 Institutional Filters Active", clrAqua, PRIORITY_IMPORTANT);
 
-    if(!EnableTrading)
+    if(!g_EnableTrading)
     {
         AddComment("⚠ INDICATOR MODE - No Trading", clrOrange, PRIORITY_CRITICAL);
         AddComment("ADVICE: Enable trading only after thorough testing", clrYellow, PRIORITY_IMPORTANT);
@@ -482,7 +525,7 @@ void OnTick()
     AddComment("─── Phase 0: Pre-Flight Checks ───", clrAqua, PRIORITY_IMPORTANT);
 
     // FIX #2: Spread Check
-    if(UseSpreadFilter)
+    if(g_UseSpreadFilter)
     {
         AnalyzeSpread();
         if(!spread_data.acceptable)
@@ -715,7 +758,7 @@ void OnTick()
         AddComment("─── Phase 4: Institutional Filters ───", clrAqua, PRIORITY_IMPORTANT);
 
         // FIX #1: Volume Analysis
-        if(UseVolumeFilter)
+        if(g_UseVolumeFilter)
         {
             AnalyzeVolume();
 
@@ -853,7 +896,7 @@ void OnTick()
         // PHASE 5: TRADE EXECUTION
         //═══════════════════════════════════════════════════════════
 
-        if(decision.decision == DECISION_ENTER && EnableTrading && !IndicatorMode)
+        if(decision.decision == DECISION_ENTER && g_EnableTrading && !IndicatorMode)
         {
             AddComment("─── Phase 5: Trade Execution ───", clrAqua, PRIORITY_IMPORTANT);
 
