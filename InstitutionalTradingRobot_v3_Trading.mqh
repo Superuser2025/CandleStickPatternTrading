@@ -619,14 +619,27 @@ void AdaptParameters()
 //+------------------------------------------------------------------+
 void LoadPatternPerformance()
 {
-    int handle = FileOpen("IGTR3_PatternPerformance.dat", FILE_READ | FILE_BIN);
+    int handle = FileOpen("IGTR3_PatternPerformance.csv", FILE_READ | FILE_CSV | FILE_ANSI, ',');
     if(handle != INVALID_HANDLE)
     {
-        performance_count = FileReadInteger(handle);
-        for(int i = 0; i < performance_count && i < 100; i++)
+        performance_count = 0;
+
+        // Skip header line if exists
+        string line = FileReadString(handle);
+
+        while(!FileIsEnding(handle) && performance_count < 100)
         {
-            FileReadStruct(handle, pattern_performance[i]);
+            pattern_performance[performance_count].pattern_name = FileReadString(handle);
+            pattern_performance[performance_count].regime = (MARKET_REGIME)FileReadInteger(handle);
+            pattern_performance[performance_count].total_trades = FileReadInteger(handle);
+            pattern_performance[performance_count].winning_trades = FileReadInteger(handle);
+            pattern_performance[performance_count].total_pnl = FileReadDouble(handle);
+            pattern_performance[performance_count].avg_rr = FileReadDouble(handle);
+            pattern_performance[performance_count].win_rate = FileReadDouble(handle);
+
+            performance_count++;
         }
+
         FileClose(handle);
         AddComment("✓ Loaded " + IntegerToString(performance_count) + " performance records", clrAqua, PRIORITY_INFO);
     }
@@ -637,14 +650,25 @@ void LoadPatternPerformance()
 //+------------------------------------------------------------------+
 void SavePatternPerformance()
 {
-    int handle = FileOpen("IGTR3_PatternPerformance.dat", FILE_WRITE | FILE_BIN);
+    int handle = FileOpen("IGTR3_PatternPerformance.csv", FILE_WRITE | FILE_CSV | FILE_ANSI, ',');
     if(handle != INVALID_HANDLE)
     {
-        FileWriteInteger(handle, performance_count);
+        // Write header
+        FileWrite(handle, "PatternName", "Regime", "TotalTrades", "WinningTrades", "TotalPnL", "AvgRR", "WinRate");
+
+        // Write data
         for(int i = 0; i < performance_count; i++)
         {
-            FileWriteStruct(handle, pattern_performance[i]);
+            FileWrite(handle,
+                     pattern_performance[i].pattern_name,
+                     (int)pattern_performance[i].regime,
+                     pattern_performance[i].total_trades,
+                     pattern_performance[i].winning_trades,
+                     pattern_performance[i].total_pnl,
+                     pattern_performance[i].avg_rr,
+                     pattern_performance[i].win_rate);
         }
+
         FileClose(handle);
     }
 }
