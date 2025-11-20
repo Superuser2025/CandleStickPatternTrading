@@ -7,6 +7,7 @@
 void CreateToggleButton(string name, int x, int y, int width, int height, string text, bool initial_state, color col_on, color col_off, string setting_name);
 void CreateBigLabel(string name, int x, int y, string text, color clr, int font_size, bool bold);
 void UpdateAllButtons();
+void UpdateSetting(string setting, bool value);
 void CreateColorBox(int index, int x, int y, color clr);
 void CreateLegendLabel(int index, int x, int y, string text, color clr, int font_size, bool bold);
 
