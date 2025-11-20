@@ -3,6 +3,9 @@
 //| Visualization Functions - Dashboard & Commentary                 |
 //+------------------------------------------------------------------+
 
+// Forward declarations
+void CreateLabel(string name, int x, int y, string text, color clr, int font_size = 11);
+
 //+------------------------------------------------------------------+
 //| UPDATE DASHBOARD DATA                                            |
 //+------------------------------------------------------------------+
