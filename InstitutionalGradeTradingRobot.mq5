@@ -258,8 +258,10 @@ struct TradeDecisionInfo {
     TRADE_DECISION decision;
     string primary_reason;
     string detailed_explanation;
-    string[] passed_filters;
-    string[] failed_filters;
+    string passed_filters[20];  // Fixed-size array (max 20 filters)
+    string failed_filters[20];  // Fixed-size array (max 20 filters)
+    int passed_count;           // Number of passed filters
+    int failed_count;           // Number of failed filters
     int confluence_score;
     string advice;
 };
@@ -735,10 +737,10 @@ void OnTick()
                      decision.confluence_score >= dynamic_required_confluence ? clrLime : clrOrange, 1);
 
         // Show what passed/failed
-        for(int i = 0; i < ArraySize(decision.passed_filters); i++) {
+        for(int i = 0; i < decision.passed_count; i++) {
             AddCommentary("  ✓ " + decision.passed_filters[i], clrLime, 3);
         }
-        for(int i = 0; i < ArraySize(decision.failed_filters); i++) {
+        for(int i = 0; i < decision.failed_count; i++) {
             AddCommentary("  ✗ " + decision.failed_filters[i], clrRed, 3);
         }
 

@@ -294,99 +294,90 @@ TradeDecisionInfo EvaluateTradeDecision()
 {
     TradeDecisionInfo decision;
     decision.confluence_score = 0;
-    ArrayResize(decision.passed_filters, 0);
-    ArrayResize(decision.failed_filters, 0);
-
-    // Check all filters
-    string temp_passed[], temp_failed[];
-    ArrayResize(temp_passed, 0);
-    ArrayResize(temp_failed, 0);
+    decision.passed_count = 0;
+    decision.failed_count = 0;
 
     // 1. Market Regime
     if(current_regime != REGIME_TRANSITION) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Market Regime: " + EnumToString(current_regime));
+        decision.passed_filters[decision.passed_count++] = "Market Regime: " + EnumToString(current_regime);
     } else {
-        AddToArray(temp_failed, "Market Regime: Choppy/Transition");
+        decision.failed_filters[decision.failed_count++] = "Market Regime: Choppy/Transition";
     }
 
     // 2. Market Bias
     if((current_bias == BIAS_BULLISH && last_pattern.is_bullish) ||
        (current_bias == BIAS_BEARISH && !last_pattern.is_bullish)) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Bias Aligned");
+        decision.passed_filters[decision.passed_count++] = "Bias Aligned";
     } else if(current_bias == BIAS_NEUTRAL) {
-        AddToArray(temp_failed, "Bias: Neutral");
+        decision.failed_filters[decision.failed_count++] = "Bias: Neutral";
     } else {
-        AddToArray(temp_failed, "Bias: Counter-trend");
+        decision.failed_filters[decision.failed_count++] = "Bias: Counter-trend";
     }
 
     // 3. Volume
     if(UseVolumeFilter && volume_data.above_average) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Volume: Above Average");
+        decision.passed_filters[decision.passed_count++] = "Volume: Above Average";
     } else if(UseVolumeFilter) {
-        AddToArray(temp_failed, "Volume: Below Average");
+        decision.failed_filters[decision.failed_count++] = "Volume: Below Average";
     }
 
     // 4. Spread
     if(UseSpreadFilter && spread_data.acceptable) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Spread: Acceptable");
+        decision.passed_filters[decision.passed_count++] = "Spread: Acceptable";
     } else if(UseSpreadFilter) {
-        AddToArray(temp_failed, "Spread: Too Wide");
+        decision.failed_filters[decision.failed_count++] = "Spread: Too Wide";
     }
 
     // 5. Session
     if(UseSessionFilter && session_data.is_tradeable) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Session: Active");
+        decision.passed_filters[decision.passed_count++] = "Session: Active";
     } else if(UseSessionFilter) {
-        AddToArray(temp_failed, "Session: Not Tradeable");
+        decision.failed_filters[decision.failed_count++] = "Session: Not Tradeable";
     }
 
     // 6. News
     bool news_clear = ArraySize(upcoming_news) == 0;
     if(UseNewsFilter && news_clear) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "News: Clear");
+        decision.passed_filters[decision.passed_count++] = "News: Clear";
     } else if(UseNewsFilter) {
-        AddToArray(temp_failed, "News: High Impact Event Near");
+        decision.failed_filters[decision.failed_count++] = "News: High Impact Event Near";
     }
 
     // 7. MTF
     if(UseMTFConfirmation && dashboard.mtf_ok) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Multi-Timeframe: Aligned");
+        decision.passed_filters[decision.passed_count++] = "Multi-Timeframe: Aligned";
     } else if(UseMTFConfirmation) {
-        AddToArray(temp_failed, "Multi-Timeframe: Conflicting");
+        decision.failed_filters[decision.failed_count++] = "Multi-Timeframe: Conflicting";
     }
 
     // 8. Correlation
     if(UseCorrelationFilter && dashboard.correlation_ok) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Portfolio Correlation: OK");
+        decision.passed_filters[decision.passed_count++] = "Portfolio Correlation: OK";
     } else if(UseCorrelationFilter) {
-        AddToArray(temp_failed, "Portfolio Correlation: Too High");
+        decision.failed_filters[decision.failed_count++] = "Portfolio Correlation: Too High";
     }
 
     // 9. Pattern Strength
     if(last_pattern.strength >= 4) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Pattern Strength: High");
+        decision.passed_filters[decision.passed_count++] = "Pattern Strength: High";
     } else {
-        AddToArray(temp_failed, "Pattern Strength: Moderate");
+        decision.failed_filters[decision.failed_count++] = "Pattern Strength: Moderate";
     }
 
     // 10. Historical Performance
     if(UsePatternPerformanceTracking && IsPatternProfitableInRegime()) {
         decision.confluence_score++;
-        AddToArray(temp_passed, "Historical Data: Profitable");
+        decision.passed_filters[decision.passed_count++] = "Historical Data: Profitable";
     }
-
-    // Copy arrays
-    ArrayCopy(decision.passed_filters, temp_passed);
-    ArrayCopy(decision.failed_filters, temp_failed);
 
     // Make decision
     if(decision.confluence_score >= dynamic_required_confluence) {
@@ -410,13 +401,6 @@ TradeDecisionInfo EvaluateTradeDecision()
     }
 
     return decision;
-}
-
-void AddToArray(string &arr[], string value)
-{
-    int size = ArraySize(arr);
-    ArrayResize(arr, size + 1);
-    arr[size] = value;
 }
 
 //+------------------------------------------------------------------+
