@@ -10,15 +10,8 @@
 //+------------------------------------------------------------------+
 //| Pattern structure (must match EA)                                |
 //+------------------------------------------------------------------+
-struct PatternInfo {
-    string name;
-    string signal;
-    int strength;
-    datetime time;
-    double price;
-    bool is_bullish;
-    int bar_index;
-};
+// NOTE: PatternInfo struct is defined in the main EA file
+// This include file only contains the detection functions
 
 //+------------------------------------------------------------------+
 //| SINGLE CANDLE PATTERNS                                           |
