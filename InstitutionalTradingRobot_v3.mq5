@@ -1067,37 +1067,56 @@ void OnChartEvent(const int id,
                   const double &dparam,
                   const string &sparam)
 {
-    // Mouse click event
+    // Handle button clicks - when a selectable object is clicked
     if(id == CHARTEVENT_OBJECT_CLICK)
     {
-        Print("Object clicked: ", sparam);
-    }
+        Print(">>> Object clicked: ", sparam);
 
-    // Mouse button down - for button detection
-    if(id == CHARTEVENT_MOUSE_MOVE)
-    {
-        int x = (int)lparam;
-        int y = (int)dparam;
-
-        // Check if mouse button is pressed
-        static bool mouse_was_pressed = false;
-        bool mouse_pressed = (dparam > 0);  // Mouse button state
-
-        // On click (button release)
-        if(mouse_was_pressed && !mouse_pressed)
+        // Check if clicked object is one of our buttons
+        for(int i = 0; i < button_count; i++)
         {
-            HandleButtonClick(x, y);
+            if(sparam == gui_buttons[i].name)
+            {
+                // Toggle button state
+                gui_buttons[i].state = !gui_buttons[i].state;
+
+                // Update the actual setting
+                UpdateSetting(gui_buttons[i].setting, gui_buttons[i].state);
+
+                // Visual feedback
+                UpdateAllButtons();
+
+                // Log the change
+                Print(">>> SETTING CHANGED: ", gui_buttons[i].setting, " = ",
+                     gui_buttons[i].state ? "ON" : "OFF");
+
+                AddComment("✓ " + gui_buttons[i].text + " switched " +
+                          (gui_buttons[i].state ? "ON" : "OFF"),
+                          gui_buttons[i].state ? clrLime : clrOrange,
+                          PRIORITY_CRITICAL);
+
+                // Update visual elements immediately
+                DrawLiquidityZones();
+                DrawFVGZones();
+                DrawOrderBlocks();
+                if(has_active_pattern)
+                {
+                    DrawPatternBox(active_pattern);
+                    DrawPatternLabel(active_pattern);
+                }
+                DrawDashboard();
+                DrawBigCommentary();
+                DrawColorLegend();
+
+                // Force chart redraw to show/hide colors immediately
+                ChartRedraw();
+
+                break;
+            }
         }
 
-        mouse_was_pressed = mouse_pressed;
-    }
-
-    // Better: Use OBJECT_CLICK
-    if(id == CHARTEVENT_CLICK)
-    {
-        int x = (int)lparam;
-        int y = (int)dparam;
-        HandleButtonClick(x, y);
+        // Deselect the object (so it doesn't stay highlighted)
+        ObjectSetInteger(0, sparam, OBJPROP_SELECTED, false);
     }
 }
 

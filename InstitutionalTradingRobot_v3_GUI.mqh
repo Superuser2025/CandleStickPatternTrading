@@ -272,6 +272,8 @@ void CreateToggleButton(string name, int x, int y, int width, int height,
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BORDER_COLOR, clrWhite);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_WIDTH, 2);
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_SELECTABLE, true);  // MAKE CLICKABLE
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_SELECTED, false);
 
     // Create text label on button
     string label_name = gui_buttons[button_count].name + "_TXT";
