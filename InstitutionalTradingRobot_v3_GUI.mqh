@@ -784,15 +784,16 @@ void CreateColorBox(int index, int x, int y, color clr)
     if(ObjectFind(0, name) < 0)
     {
         ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);  // Changed to LOWER
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);
     }
 
     ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
-    ObjectSetInteger(0, name, OBJPROP_XSIZE, 15);
-    ObjectSetInteger(0, name, OBJPROP_YSIZE, 15);
+    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y + 3);  // Offset to align with text baseline
+    ObjectSetInteger(0, name, OBJPROP_XSIZE, 16);
+    ObjectSetInteger(0, name, OBJPROP_YSIZE, 16);
     ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clr);
     ObjectSetInteger(0, name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+    ObjectSetInteger(0, name, OBJPROP_BACK, false);
 }
 
 //+------------------------------------------------------------------+
@@ -805,8 +806,8 @@ void CreateLegendLabel(int index, int x, int y, string text, color clr, int font
     if(ObjectFind(0, name) < 0)
     {
         ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);  // Changed to LOWER
-        ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);  // Changed to LOWER
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);
+        ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);
         ObjectSetString(0, name, OBJPROP_FONT, bold ? "Arial Bold" : "Arial");
         ObjectSetInteger(0, name, OBJPROP_FONTSIZE, font_size);
     }
@@ -896,6 +897,99 @@ void DrawButtonStatus()
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
         ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 28);
         ObjectSetString(0, label_name, OBJPROP_TEXT, "Ready - Click buttons to configure filters...");
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrGray);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| DRAW PRICE ACTION COMMENTARY - Educational Deep Analysis         |
+//+------------------------------------------------------------------+
+void DrawPriceActionCommentary()
+{
+    string box_name = prefix + "PriceAction_Box";
+
+    if(!g_ShowCommentary)
+    {
+        // Hide price action commentary
+        ObjectDelete(0, box_name);
+        for(int i = 0; i < 30; i++)
+        {
+            ObjectDelete(0, prefix + "PAC_" + IntegerToString(i));
+        }
+        return;
+    }
+
+    int x = 750;   // Right side, below Real-Time Analysis
+    int y = 465;   // Below Real-Time Analysis panel
+    int width = 550;
+    int line_height = 20;
+    int max_lines = 25;  // Show more lines for detailed commentary
+
+    // Background box - SCROLLABLE COMMENTARY
+    if(ObjectFind(0, box_name) < 0)
+    {
+        ObjectCreate(0, box_name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, box_name, OBJPROP_XDISTANCE, x);
+        ObjectSetInteger(0, box_name, OBJPROP_YDISTANCE, y);
+        ObjectSetInteger(0, box_name, OBJPROP_XSIZE, width);
+        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, 500);  // Tall panel
+        ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'10,15,25');  // Dark blue background
+        ObjectSetInteger(0, box_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+        ObjectSetInteger(0, box_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, box_name, OBJPROP_BACK, true);
+    }
+
+    // Title
+    string title_name = prefix + "PriceAction_Title";
+    if(ObjectFind(0, title_name) < 0)
+    {
+        ObjectCreate(0, title_name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, title_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, title_name, OBJPROP_FONT, "Arial Bold");
+        ObjectSetInteger(0, title_name, OBJPROP_FONTSIZE, 13);
+    }
+    ObjectSetInteger(0, title_name, OBJPROP_XDISTANCE, x + 10);
+    ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 8);
+    ObjectSetString(0, title_name, OBJPROP_TEXT, "═══ PRICE ACTION COMMENTARY ═══");
+    ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrGold);
+
+    // Clear old labels
+    for(int i = 0; i < 30; i++)
+    {
+        string label_name = prefix + "PAC_" + IntegerToString(i);
+        ObjectDelete(0, label_name);
+    }
+
+    // Draw commentary lines (show most recent)
+    int start_index = MathMax(0, pa_commentary_count - max_lines);
+
+    for(int i = start_index; i < pa_commentary_count; i++)
+    {
+        string label_name = prefix + "PAC_" + IntegerToString(i - start_index);
+
+        ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+        ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");  // Monospace font for alignment
+        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 9);
+
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 35 + (i - start_index) * line_height);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, price_action_commentary[i].text);
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, price_action_commentary[i].text_color);
+    }
+
+    // Show info message if no commentary yet
+    if(pa_commentary_count == 0)
+    {
+        string label_name = prefix + "PAC_0";
+        ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
+        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 35);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, "Waiting for market activity...");
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrGray);
     }
 }

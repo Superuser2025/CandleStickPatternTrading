@@ -382,6 +382,10 @@ int                 commentary_count = 0;
 CommentaryLine      button_status_buffer[10];  // Only keep last 10 button changes
 int                 button_status_count = 0;
 
+// NEW: Price Action Commentary System (Educational Explanations)
+CommentaryLine      price_action_commentary[30];  // Detailed price action explanations
+int                 pa_commentary_count = 0;
+
 // Pattern Performance (FIX #17)
 PatternPerformance  pattern_performance[100];
 int                 performance_count = 0;
@@ -463,6 +467,28 @@ void AddComment(string text, color text_color, int priority)
     // Print critical messages to terminal
     if(priority == PRIORITY_CRITICAL)
         Print(">>> ", text);
+}
+
+//+------------------------------------------------------------------+
+//| Add Price Action Commentary (Educational Detailed Analysis)      |
+//+------------------------------------------------------------------+
+void AddPriceActionComment(string text, color text_color, int priority)
+{
+    if(!g_ShowCommentary) return;
+
+    // Shift buffer if full
+    if(pa_commentary_count >= 30)
+    {
+        for(int i = 0; i < 29; i++)
+            price_action_commentary[i] = price_action_commentary[i+1];
+        pa_commentary_count = 29;
+    }
+
+    price_action_commentary[pa_commentary_count].text = text;
+    price_action_commentary[pa_commentary_count].text_color = text_color;
+    price_action_commentary[pa_commentary_count].timestamp = TimeCurrent();
+    price_action_commentary[pa_commentary_count].priority = priority;
+    pa_commentary_count++;
 }
 
 //+------------------------------------------------------------------+
@@ -1097,6 +1123,13 @@ void OnTick()
         AdaptParameters();
     }
 
+    //═══════════════════════════════════════════════════════════════
+    // PHASE 8: PRICE ACTION COMMENTARY (Educational Deep Analysis)
+    //═══════════════════════════════════════════════════════════════
+
+    // Perform comprehensive price action analysis with detailed commentary
+    PerformPriceActionAnalysis();
+
     // Update & Draw Dashboard
     UpdateDashboard();
     DrawDashboard();  // Function checks g_ShowDashboard internally
@@ -1109,6 +1142,9 @@ void OnTick()
 
     // Draw Color Legend
     DrawColorLegend();  // Function checks g_ShowColorLegend internally
+
+    // Draw PRICE ACTION COMMENTARY (Educational)
+    DrawPriceActionCommentary();  // Function checks g_ShowCommentary internally
 }
 
 //+------------------------------------------------------------------+

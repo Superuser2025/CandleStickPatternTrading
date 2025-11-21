@@ -637,3 +637,417 @@ double GetRangeLow(int lookback)
 }
 
 //+------------------------------------------------------------------+
+//| COMPREHENSIVE PRICE ACTION COMMENTARY MODULE                      |
+//| Educational real-time analysis and explanations                  |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Analyze FVG Fills - Track and explain Fair Value Gap fills       |
+//+------------------------------------------------------------------+
+void AnalyzeFVGFills()
+{
+    double current_price = iClose(_Symbol, PreferredTimeframe, 0);
+    double current_high = iHigh(_Symbol, PreferredTimeframe, 0);
+    double current_low = iLow(_Symbol, PreferredTimeframe, 0);
+
+    for(int i = 0; i < fvg_count; i++)
+    {
+        if(fvg_zones[i].filled) continue;
+
+        // Check if price is interacting with FVG
+        bool price_in_fvg = (current_high >= fvg_zones[i].bottom && current_low <= fvg_zones[i].top);
+
+        if(price_in_fvg)
+        {
+            // Calculate fill percentage
+            double gap_size = fvg_zones[i].top - fvg_zones[i].bottom;
+            double filled_amount = 0;
+
+            if(fvg_zones[i].is_bullish)
+            {
+                // Bullish FVG fills from bottom up
+                if(current_low <= fvg_zones[i].bottom)
+                    filled_amount = MathMin(current_high, fvg_zones[i].top) - fvg_zones[i].bottom;
+                else
+                    filled_amount = MathMin(current_high, fvg_zones[i].top) - current_low;
+            }
+            else
+            {
+                // Bearish FVG fills from top down
+                if(current_high >= fvg_zones[i].top)
+                    filled_amount = fvg_zones[i].top - MathMax(current_low, fvg_zones[i].bottom);
+                else
+                    filled_amount = current_high - MathMax(current_low, fvg_zones[i].bottom);
+            }
+
+            double fill_percentage = (filled_amount / gap_size) * 100.0;
+            fvg_zones[i].fill_percentage = fill_percentage;
+
+            // Generate commentary based on fill level
+            string fvg_type = fvg_zones[i].is_bullish ? "BULLISH" : "BEARISH";
+            string gap_range = DoubleToString(fvg_zones[i].bottom, _Digits) + " - " + DoubleToString(fvg_zones[i].top, _Digits);
+
+            if(fill_percentage >= 90)
+            {
+                fvg_zones[i].filled = true;
+                AddPriceActionComment("✓ " + fvg_type + " FVG FULLY FILLED (" + gap_range + ")",
+                                     fvg_zones[i].is_bullish ? clrLime : clrRed, PRIORITY_IMPORTANT);
+                AddPriceActionComment("→ Imbalance corrected - Watch for continuation or reversal",
+                                     clrYellow, PRIORITY_INFO);
+            }
+            else if(fill_percentage >= 50)
+            {
+                AddPriceActionComment("⚡ " + fvg_type + " FVG " + DoubleToString(fill_percentage, 0) + "% FILLED (" + gap_range + ")",
+                                     clrOrange, PRIORITY_IMPORTANT);
+                AddPriceActionComment("→ Partial fill - Price in the GAP zone, looking for reaction",
+                                     clrYellow, PRIORITY_INFO);
+            }
+            else if(fill_percentage > 0)
+            {
+                AddPriceActionComment("→ " + fvg_type + " FVG touched (" + DoubleToString(fill_percentage, 0) + "% filled)",
+                                     clrCyan, PRIORITY_INFO);
+                AddPriceActionComment("→ Price entering the imbalance zone - Early reaction point",
+                                     clrYellow, PRIORITY_INFO);
+            }
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Analyze Order Block Interactions - Track price behavior at OBs   |
+//+------------------------------------------------------------------+
+void AnalyzeOrderBlockInteractions()
+{
+    double current_price = iClose(_Symbol, PreferredTimeframe, 0);
+    double current_high = iHigh(_Symbol, PreferredTimeframe, 0);
+    double current_low = iLow(_Symbol, PreferredTimeframe, 0);
+    double prev_close = iClose(_Symbol, PreferredTimeframe, 1);
+
+    for(int i = 0; i < ob_count; i++)
+    {
+        if(order_blocks[i].invalidated) continue;
+
+        bool price_in_ob = (current_low <= order_blocks[i].top && current_high >= order_blocks[i].bottom);
+        bool prev_in_ob = (prev_close >= order_blocks[i].bottom && prev_close <= order_blocks[i].top);
+
+        string ob_type = order_blocks[i].is_bullish ? "BULLISH" : "BEARISH";
+        string ob_range = DoubleToString(order_blocks[i].bottom, _Digits) + " - " + DoubleToString(order_blocks[i].top, _Digits);
+
+        // Price entering OB
+        if(price_in_ob && !prev_in_ob)
+        {
+            AddPriceActionComment("🎯 Price ENTERING " + ob_type + " ORDER BLOCK (" + ob_range + ")",
+                                 order_blocks[i].is_bullish ? clrLime : clrRed, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Test #" + IntegerToString(order_blocks[i].test_count + 1) +
+                                 " - Institutional demand/supply zone active",
+                                 clrCyan, PRIORITY_IMPORTANT);
+
+            if(order_blocks[i].test_count >= MaxOBTests - 1)
+            {
+                AddPriceActionComment("⚠ WARNING: Final test of this OB - Next break invalidates it",
+                                     clrOrange, PRIORITY_IMPORTANT);
+            }
+        }
+
+        // Price rejecting from OB
+        if(prev_in_ob && !price_in_ob)
+        {
+            bool rejection = (order_blocks[i].is_bullish && current_price > prev_close) ||
+                           (!order_blocks[i].is_bullish && current_price < prev_close);
+
+            if(rejection)
+            {
+                AddPriceActionComment("✓ STRONG REJECTION from " + ob_type + " ORDER BLOCK!",
+                                     clrLime, PRIORITY_CRITICAL);
+                AddPriceActionComment("→ Institutional orders triggered - Continuation likely",
+                                     clrYellow, PRIORITY_IMPORTANT);
+            }
+            else
+            {
+                AddPriceActionComment("⛔ " + ob_type + " ORDER BLOCK BREACHED - Invalidated",
+                                     clrRed, PRIORITY_CRITICAL);
+                AddPriceActionComment("→ Liquidity absorbed - Look for new zones",
+                                     clrOrange, PRIORITY_IMPORTANT);
+            }
+        }
+
+        // Price inside OB
+        if(price_in_ob && prev_in_ob)
+        {
+            AddPriceActionComment("📍 Price INSIDE " + ob_type + " ORDER BLOCK - Decision zone",
+                                 clrCyan, PRIORITY_INFO);
+
+            if(order_blocks[i].is_bullish && current_price > prev_close)
+            {
+                AddPriceActionComment("→ Bullish candle forming in demand zone - Positive sign",
+                                     clrLime, PRIORITY_INFO);
+            }
+            else if(!order_blocks[i].is_bullish && current_price < prev_close)
+            {
+                AddPriceActionComment("→ Bearish candle forming in supply zone - Positive sign",
+                                     clrRed, PRIORITY_INFO);
+            }
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Analyze Liquidity Sweeps - Detailed sweep commentary             |
+//+------------------------------------------------------------------+
+void AnalyzeLiquiditySweepsDetailed()
+{
+    double current_high = iHigh(_Symbol, PreferredTimeframe, 1);
+    double current_low = iLow(_Symbol, PreferredTimeframe, 1);
+    double current_close = iClose(_Symbol, PreferredTimeframe, 1);
+    double prev_high = iHigh(_Symbol, PreferredTimeframe, 2);
+    double prev_low = iLow(_Symbol, PreferredTimeframe, 2);
+
+    for(int i = 0; i < liquidity_count; i++)
+    {
+        if(liquidity_zones[i].swept) continue;
+
+        // Check for liquidity sweep
+        if(liquidity_zones[i].is_high)
+        {
+            // Sellside liquidity (above high)
+            if(current_high > liquidity_zones[i].price && current_close < liquidity_zones[i].price)
+            {
+                liquidity_zones[i].swept = true;
+                AddPriceActionComment("💥 SELL-SIDE LIQUIDITY SWEPT at " + DoubleToString(liquidity_zones[i].price, _Digits),
+                                     clrOrange, PRIORITY_CRITICAL);
+                AddPriceActionComment("→ Stop losses triggered above high - Smart money trapping retail longs",
+                                     clrYellow, PRIORITY_IMPORTANT);
+                AddPriceActionComment("→ Look for bearish continuation after liquidity grab",
+                                     clrAqua, PRIORITY_IMPORTANT);
+            }
+        }
+        else
+        {
+            // Buyside liquidity (below low)
+            if(current_low < liquidity_zones[i].price && current_close > liquidity_zones[i].price)
+            {
+                liquidity_zones[i].swept = true;
+                AddPriceActionComment("💥 BUY-SIDE LIQUIDITY SWEPT at " + DoubleToString(liquidity_zones[i].price, _Digits),
+                                     clrDodgerBlue, PRIORITY_CRITICAL);
+                AddPriceActionComment("→ Stop losses triggered below low - Smart money trapping retail shorts",
+                                     clrYellow, PRIORITY_IMPORTANT);
+                AddPriceActionComment("→ Look for bullish continuation after liquidity grab",
+                                     clrAqua, PRIORITY_IMPORTANT);
+            }
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Detect Break of Structure (BOS) and Change of Character (CHoCH)  |
+//+------------------------------------------------------------------+
+void DetectMarketStructureBreaks()
+{
+    static double last_structure_high = 0;
+    static double last_structure_low = 0;
+    static string last_structure_type = "";
+
+    double current_close = iClose(_Symbol, PreferredTimeframe, 1);
+    double swing_high = GetSwingHigh(10);
+    double swing_low = GetSwingLow(10);
+
+    // Break of Structure (BOS) - Continuation pattern
+    if(market_structure.structure == "BULLISH (HH+HL)")
+    {
+        if(last_structure_type != "BULLISH")
+        {
+            AddPriceActionComment("📈 BULLISH MARKET STRUCTURE confirmed (Higher Highs + Higher Lows)",
+                                 clrLime, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Uptrend intact - Look for pullbacks to enter longs",
+                                 clrAqua, PRIORITY_IMPORTANT);
+            last_structure_type = "BULLISH";
+        }
+
+        // Check for BOS (new higher high)
+        if(swing_high > last_structure_high && last_structure_high > 0)
+        {
+            AddPriceActionComment("🚀 BREAK OF STRUCTURE (BOS) - New Higher High at " + DoubleToString(swing_high, _Digits),
+                                 clrLime, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Bullish continuation confirmed - Momentum accelerating",
+                                 clrYellow, PRIORITY_IMPORTANT);
+        }
+        last_structure_high = swing_high;
+    }
+    else if(market_structure.structure == "BEARISH (LH+LL)")
+    {
+        if(last_structure_type != "BEARISH")
+        {
+            AddPriceActionComment("📉 BEARISH MARKET STRUCTURE confirmed (Lower Highs + Lower Lows)",
+                                 clrRed, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Downtrend intact - Look for pullbacks to enter shorts",
+                                 clrAqua, PRIORITY_IMPORTANT);
+            last_structure_type = "BEARISH";
+        }
+
+        // Check for BOS (new lower low)
+        if(swing_low < last_structure_low || last_structure_low == 0)
+        {
+            AddPriceActionComment("🔻 BREAK OF STRUCTURE (BOS) - New Lower Low at " + DoubleToString(swing_low, _Digits),
+                                 clrRed, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Bearish continuation confirmed - Momentum accelerating",
+                                 clrYellow, PRIORITY_IMPORTANT);
+        }
+        last_structure_low = swing_low;
+    }
+    else if(market_structure.structure == "CHOPPY")
+    {
+        // Check for Change of Character (CHoCH) - Potential reversal
+        if(last_structure_type == "BULLISH" && swing_low < last_structure_low)
+        {
+            AddPriceActionComment("⚠ CHANGE OF CHARACTER (CHoCH) - Lower Low detected",
+                                 clrOrange, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Bullish structure broken - Potential trend reversal forming",
+                                 clrYellow, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Wait for confirmation before entering shorts",
+                                 clrCyan, PRIORITY_IMPORTANT);
+            last_structure_type = "CHOPPY";
+        }
+        else if(last_structure_type == "BEARISH" && swing_high > last_structure_high)
+        {
+            AddPriceActionComment("⚠ CHANGE OF CHARACTER (CHoCH) - Higher High detected",
+                                 clrOrange, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Bearish structure broken - Potential trend reversal forming",
+                                 clrYellow, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Wait for confirmation before entering longs",
+                                 clrCyan, PRIORITY_IMPORTANT);
+            last_structure_type = "CHOPPY";
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Analyze Real-Time Price Position - Where is price relative to key levels |
+//+------------------------------------------------------------------+
+void AnalyzePricePosition()
+{
+    double current_price = iClose(_Symbol, PreferredTimeframe, 0);
+    double atr_buffer[];
+    ArraySetAsSeries(atr_buffer, true);
+    if(CopyBuffer(h_ATR, 0, 0, 1, atr_buffer) <= 0) return;
+    double atr = atr_buffer[0];
+
+    // Find nearest liquidity zones
+    double nearest_resistance = 0;
+    double nearest_support = 0;
+    double min_resistance_distance = DBL_MAX;
+    double min_support_distance = DBL_MAX;
+
+    for(int i = 0; i < liquidity_count; i++)
+    {
+        if(liquidity_zones[i].is_high && liquidity_zones[i].price > current_price)
+        {
+            double distance = liquidity_zones[i].price - current_price;
+            if(distance < min_resistance_distance)
+            {
+                min_resistance_distance = distance;
+                nearest_resistance = liquidity_zones[i].price;
+            }
+        }
+        else if(!liquidity_zones[i].is_high && liquidity_zones[i].price < current_price)
+        {
+            double distance = current_price - liquidity_zones[i].price;
+            if(distance < min_support_distance)
+            {
+                min_support_distance = distance;
+                nearest_support = liquidity_zones[i].price;
+            }
+        }
+    }
+
+    // Position commentary
+    if(nearest_resistance > 0 && nearest_support > 0)
+    {
+        double range_size = nearest_resistance - nearest_support;
+        double position_pct = ((current_price - nearest_support) / range_size) * 100.0;
+
+        string position_desc = "";
+        color position_color = clrWhite;
+
+        if(position_pct < 20)
+        {
+            position_desc = "LOWER RANGE";
+            position_color = clrLime;
+            AddPriceActionComment("📍 Price at " + position_desc + " (" + DoubleToString(position_pct, 0) + "% of range)",
+                                 position_color, PRIORITY_INFO);
+            AddPriceActionComment("→ Near support at " + DoubleToString(nearest_support, _Digits) + " - Watch for bounce",
+                                 clrCyan, PRIORITY_INFO);
+        }
+        else if(position_pct > 80)
+        {
+            position_desc = "UPPER RANGE";
+            position_color = clrRed;
+            AddPriceActionComment("📍 Price at " + position_desc + " (" + DoubleToString(position_pct, 0) + "% of range)",
+                                 position_color, PRIORITY_INFO);
+            AddPriceActionComment("→ Near resistance at " + DoubleToString(nearest_resistance, _Digits) + " - Watch for rejection",
+                                 clrCyan, PRIORITY_INFO);
+        }
+        else
+        {
+            position_desc = "MID-RANGE";
+            position_color = clrYellow;
+            AddPriceActionComment("📍 Price in " + position_desc + " (" + DoubleToString(position_pct, 0) + "% between levels)",
+                                 position_color, PRIORITY_INFO);
+            AddPriceActionComment("→ Between " + DoubleToString(nearest_support, _Digits) + " support and " +
+                                 DoubleToString(nearest_resistance, _Digits) + " resistance",
+                                 clrCyan, PRIORITY_INFO);
+        }
+    }
+
+    // Volume context
+    if(volume_data.volume_ratio > 2.0)
+    {
+        AddPriceActionComment("🔊 VOLUME SPIKE (" + DoubleToString(volume_data.volume_ratio, 1) + "x average)",
+                             clrOrange, PRIORITY_IMPORTANT);
+        AddPriceActionComment("→ High institutional activity - Significant move likely incoming",
+                             clrYellow, PRIORITY_INFO);
+    }
+    else if(volume_data.volume_ratio < 0.5)
+    {
+        AddPriceActionComment("🔇 Low volume (" + DoubleToString(volume_data.volume_ratio, 1) + "x average)",
+                             clrGray, PRIORITY_INFO);
+        AddPriceActionComment("→ Lack of conviction - Moves may be unreliable",
+                             clrOrange, PRIORITY_INFO);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Master Price Action Analysis - Call all analysis functions       |
+//+------------------------------------------------------------------+
+void PerformPriceActionAnalysis()
+{
+    // Clear previous commentary
+    pa_commentary_count = 0;
+
+    AddPriceActionComment("═══ PRICE ACTION ANALYSIS ═══", clrYellow, PRIORITY_CRITICAL);
+    AddPriceActionComment("Time: " + TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES), clrWhite, PRIORITY_INFO);
+    AddPriceActionComment("", clrWhite, PRIORITY_INFO);  // Spacing
+
+    // Run all analysis modules
+    AnalyzePricePosition();
+    AnalyzeFVGFills();
+    AnalyzeOrderBlockInteractions();
+    AnalyzeLiquiditySweepsDetailed();
+    DetectMarketStructureBreaks();
+
+    // Session context
+    AddPriceActionComment("", clrWhite, PRIORITY_INFO);  // Spacing
+    AddPriceActionComment("──── TRADING CONTEXT ────", clrAqua, PRIORITY_INFO);
+    AddPriceActionComment("Session: " + session_data.session_name + (session_data.is_tradeable ? " (Active)" : " (Closed)"),
+                         session_data.is_tradeable ? clrLime : clrGray, PRIORITY_INFO);
+
+    string vol_text = "Volatility: ";
+    switch(current_volatility)
+    {
+        case VOL_LOW: vol_text += "LOW (Compression - Breakout pending)"; break;
+        case VOL_NORMAL: vol_text += "NORMAL"; break;
+        case VOL_HIGH: vol_text += "HIGH (Expansion - Be cautious)"; break;
+    }
+    AddPriceActionComment(vol_text, clrCyan, PRIORITY_INFO);
+}
+
+//+------------------------------------------------------------------+
