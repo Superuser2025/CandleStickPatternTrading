@@ -594,6 +594,49 @@ void DrawBigCommentary()
         ObjectSetString(0, label_name, OBJPROP_TEXT, decision_text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, decision_color);
         row++;
+
+        // Signal Timestamp - Show when pattern was detected
+        label_name = prefix + "RTA_" + IntegerToString(row);
+        if(ObjectFind(0, label_name) < 0)
+        {
+            ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
+            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
+        }
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, base_y + row * line_height);
+        ObjectSetString(0, label_name, OBJPROP_TEXT,
+                       "Signal Generated: " + TimeToString(active_pattern.detected_time, TIME_DATE|TIME_MINUTES));
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrCyan);
+        row++;
+
+        // Calculate and show how long ago the signal was generated
+        int seconds_ago = (int)(TimeCurrent() - active_pattern.detected_time);
+        int minutes_ago = seconds_ago / 60;
+        int hours_ago = minutes_ago / 60;
+        string time_ago = "";
+
+        if(hours_ago > 0)
+            time_ago = IntegerToString(hours_ago) + " hour(s) " + IntegerToString(minutes_ago % 60) + " min ago";
+        else if(minutes_ago > 0)
+            time_ago = IntegerToString(minutes_ago) + " minute(s) ago";
+        else
+            time_ago = "Just now";
+
+        label_name = prefix + "RTA_" + IntegerToString(row);
+        if(ObjectFind(0, label_name) < 0)
+        {
+            ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
+            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
+        }
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, base_y + row * line_height);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, "Duration: " + time_ago);
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrGray);
+        row++;
     }
     else
     {
