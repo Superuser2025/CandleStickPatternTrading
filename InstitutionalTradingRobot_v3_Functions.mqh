@@ -878,6 +878,7 @@ void AnalyzeFVGFills()
     double current_price = iClose(_Symbol, PreferredTimeframe, 0);
     double current_high = iHigh(_Symbol, PreferredTimeframe, 0);
     double current_low = iLow(_Symbol, PreferredTimeframe, 0);
+    double prev_close = iClose(_Symbol, PreferredTimeframe, 1);
 
     for(int i = 0; i < fvg_count; i++)
     {
@@ -885,6 +886,11 @@ void AnalyzeFVGFills()
 
         // Check if price is interacting with FVG
         bool price_in_fvg = (current_high >= fvg_zones[i].bottom && current_low <= fvg_zones[i].top);
+        bool prev_in_fvg = (prev_close >= fvg_zones[i].bottom && prev_close <= fvg_zones[i].top);
+
+        // Detect entry direction
+        bool entering_from_top = !prev_in_fvg && price_in_fvg && prev_close > fvg_zones[i].top;
+        bool entering_from_bottom = !prev_in_fvg && price_in_fvg && prev_close < fvg_zones[i].bottom;
 
         if(price_in_fvg)
         {
@@ -916,24 +922,47 @@ void AnalyzeFVGFills()
             string fvg_type = fvg_zones[i].is_bullish ? "BULLISH" : "BEARISH";
             string gap_range = DoubleToString(fvg_zones[i].bottom, _Digits) + " - " + DoubleToString(fvg_zones[i].top, _Digits);
 
+            // Add direction context
+            string direction_text = "";
+            if(entering_from_top)
+            {
+                direction_text = " from ABOVE";
+                if(fvg_zones[i].is_bullish)
+                    AddPriceActionComment("→ Price filling bullish FVG from above - Less ideal, watch for reversal",
+                                         clrOrange, PRIORITY_INFO);
+                else
+                    AddPriceActionComment("→ Price filling bearish FVG from above - IDEAL direction",
+                                         clrRed, PRIORITY_INFO);
+            }
+            else if(entering_from_bottom)
+            {
+                direction_text = " from BELOW";
+                if(fvg_zones[i].is_bullish)
+                    AddPriceActionComment("→ Price filling bullish FVG from below - IDEAL direction",
+                                         clrLime, PRIORITY_INFO);
+                else
+                    AddPriceActionComment("→ Price filling bearish FVG from below - Less ideal, watch for reversal",
+                                         clrOrange, PRIORITY_INFO);
+            }
+
             if(fill_percentage >= 90)
             {
                 fvg_zones[i].filled = true;
-                AddPriceActionComment("✓ " + fvg_type + " FVG FULLY FILLED (" + gap_range + ")",
+                AddPriceActionComment("✓ " + fvg_type + " FVG FULLY FILLED" + direction_text + " (" + gap_range + ")",
                                      fvg_zones[i].is_bullish ? clrLime : clrRed, PRIORITY_IMPORTANT);
                 AddPriceActionComment("→ Imbalance corrected - Watch for continuation or reversal",
                                      clrYellow, PRIORITY_INFO);
             }
             else if(fill_percentage >= 50)
             {
-                AddPriceActionComment("⚡ " + fvg_type + " FVG " + DoubleToString(fill_percentage, 0) + "% FILLED (" + gap_range + ")",
+                AddPriceActionComment("⚡ " + fvg_type + " FVG " + DoubleToString(fill_percentage, 0) + "% FILLED" + direction_text + " (" + gap_range + ")",
                                      clrOrange, PRIORITY_IMPORTANT);
                 AddPriceActionComment("→ Partial fill - Price in the GAP zone, looking for reaction",
                                      clrYellow, PRIORITY_INFO);
             }
-            else if(fill_percentage > 0)
+            else if(fill_percentage > 0 && !prev_in_fvg)
             {
-                AddPriceActionComment("→ " + fvg_type + " FVG touched (" + DoubleToString(fill_percentage, 0) + "% filled)",
+                AddPriceActionComment("→ " + fvg_type + " FVG touched" + direction_text + " (" + DoubleToString(fill_percentage, 0) + "% filled)",
                                      clrCyan, PRIORITY_INFO);
                 AddPriceActionComment("→ Price entering the imbalance zone - Early reaction point",
                                      clrYellow, PRIORITY_INFO);
@@ -965,8 +994,41 @@ void AnalyzeOrderBlockInteractions()
         // Price entering OB
         if(price_in_ob && !prev_in_ob)
         {
-            AddPriceActionComment("🎯 Price ENTERING " + ob_type + " ORDER BLOCK (" + ob_range + ")",
+            // Determine if price is entering from top or bottom
+            bool entering_from_top = prev_close > order_blocks[i].top;
+            bool entering_from_bottom = prev_close < order_blocks[i].bottom;
+            string entry_direction = "";
+
+            if(entering_from_top)
+                entry_direction = " from ABOVE";
+            else if(entering_from_bottom)
+                entry_direction = " from BELOW";
+
+            AddPriceActionComment("🎯 Price ENTERING " + ob_type + " ORDER BLOCK" + entry_direction + " (" + ob_range + ")",
                                  order_blocks[i].is_bullish ? clrLime : clrRed, PRIORITY_CRITICAL);
+
+            // Add context about the entry direction
+            if(order_blocks[i].is_bullish && entering_from_bottom)
+            {
+                AddPriceActionComment("→ Price approaching bullish OB from below - IDEAL for longs",
+                                     clrLime, PRIORITY_IMPORTANT);
+            }
+            else if(order_blocks[i].is_bullish && entering_from_top)
+            {
+                AddPriceActionComment("→ Price re-entering bullish OB from above - Possible retest",
+                                     clrYellow, PRIORITY_IMPORTANT);
+            }
+            else if(!order_blocks[i].is_bullish && entering_from_top)
+            {
+                AddPriceActionComment("→ Price approaching bearish OB from above - IDEAL for shorts",
+                                     clrRed, PRIORITY_IMPORTANT);
+            }
+            else if(!order_blocks[i].is_bullish && entering_from_bottom)
+            {
+                AddPriceActionComment("→ Price re-entering bearish OB from below - Possible retest",
+                                     clrYellow, PRIORITY_IMPORTANT);
+            }
+
             AddPriceActionComment("→ Test #" + IntegerToString(order_blocks[i].test_count + 1) +
                                  " - Institutional demand/supply zone active",
                                  clrCyan, PRIORITY_IMPORTANT);

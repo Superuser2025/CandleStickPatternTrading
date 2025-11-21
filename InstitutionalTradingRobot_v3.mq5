@@ -383,7 +383,7 @@ CommentaryLine      button_status_buffer[10];  // Only keep last 10 button chang
 int                 button_status_count = 0;
 
 // NEW: Price Action Commentary System (Educational Explanations)
-CommentaryLine      price_action_commentary[30];  // Detailed price action explanations
+CommentaryLine      price_action_commentary[50];  // Detailed price action explanations (max 50)
 int                 pa_commentary_count = 0;
 
 // Pattern Performance (FIX #17)
@@ -470,24 +470,20 @@ void AddComment(string text, color text_color, int priority)
 }
 
 //+------------------------------------------------------------------+
-//| Format Time Difference (e.g., "3s ago", "2m ago", "1h ago")     |
+//| Format Time as DD.MM.YY.HH:MM                                    |
 //+------------------------------------------------------------------+
 string FormatTimeDifference(datetime past_time)
 {
-    datetime current_time = TimeCurrent();
-    int diff_seconds = (int)(current_time - past_time);
+    MqlDateTime dt;
+    TimeToStruct(past_time, dt);
 
-    if(diff_seconds < 0) return "Just now";
-    if(diff_seconds < 60) return IntegerToString(diff_seconds) + "s ago";
+    string day = StringFormat("%02d", dt.day);
+    string month = StringFormat("%02d", dt.mon);
+    string year = StringFormat("%02d", dt.year % 100);  // Last 2 digits of year
+    string hour = StringFormat("%02d", dt.hour);
+    string minute = StringFormat("%02d", dt.min);
 
-    int diff_minutes = diff_seconds / 60;
-    if(diff_minutes < 60) return IntegerToString(diff_minutes) + "m ago";
-
-    int diff_hours = diff_minutes / 60;
-    if(diff_hours < 24) return IntegerToString(diff_hours) + "h ago";
-
-    int diff_days = diff_hours / 24;
-    return IntegerToString(diff_days) + "d ago";
+    return day + "." + month + "." + year + "." + hour + ":" + minute;
 }
 
 //+------------------------------------------------------------------+
@@ -497,12 +493,12 @@ void AddPriceActionComment(string text, color text_color, int priority)
 {
     if(!g_ShowCommentary) return;
 
-    // Shift buffer if full
-    if(pa_commentary_count >= 30)
+    // Shift buffer if full (max 50 messages)
+    if(pa_commentary_count >= 50)
     {
-        for(int i = 0; i < 29; i++)
+        for(int i = 0; i < 49; i++)
             price_action_commentary[i] = price_action_commentary[i+1];
-        pa_commentary_count = 29;
+        pa_commentary_count = 49;
     }
 
     price_action_commentary[pa_commentary_count].text = text;

@@ -912,7 +912,10 @@ void DrawPriceActionCommentary()
     {
         // Hide price action commentary
         ObjectDelete(0, box_name);
-        for(int i = 0; i < 30; i++)
+        ObjectDelete(0, prefix + "PriceAction_Title");
+        ObjectDelete(0, prefix + "PAC_ServerTime");
+        ObjectDelete(0, prefix + "PAC_LocalTime");
+        for(int i = 0; i < 52; i++)  // 50 messages + 2 time headers
         {
             ObjectDelete(0, prefix + "PAC_" + IntegerToString(i));
         }
@@ -923,7 +926,7 @@ void DrawPriceActionCommentary()
     int y = 465;   // Below Real-Time Analysis panel
     int width = 550;
     int line_height = 20;
-    int max_lines = 25;  // Show more lines for detailed commentary
+    int max_lines = 50;  // Show up to 50 messages
 
     // Background box - SCROLLABLE COMMENTARY
     if(ObjectFind(0, box_name) < 0)
@@ -953,19 +956,59 @@ void DrawPriceActionCommentary()
     ObjectSetString(0, title_name, OBJPROP_TEXT, "═══ PRICE ACTION COMMENTARY ═══");
     ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrGold);
 
-    // Clear old labels
-    for(int i = 0; i < 30; i++)
+    // Server Time Header (Persistent)
+    string server_time_label = prefix + "PAC_ServerTime";
+    if(ObjectFind(0, server_time_label) < 0)
+    {
+        ObjectCreate(0, server_time_label, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, server_time_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, server_time_label, OBJPROP_FONT, "Arial Bold");
+        ObjectSetInteger(0, server_time_label, OBJPROP_FONTSIZE, 10);
+    }
+    MqlDateTime dt_server;
+    TimeToStruct(TimeCurrent(), dt_server);
+    string server_time_text = StringFormat("Server Time: %02d.%02d.%02d.%02d:%02d",
+                                           dt_server.day, dt_server.mon, dt_server.year % 100,
+                                           dt_server.hour, dt_server.min);
+    ObjectSetInteger(0, server_time_label, OBJPROP_XDISTANCE, x + 10);
+    ObjectSetInteger(0, server_time_label, OBJPROP_YDISTANCE, y + 30);
+    ObjectSetString(0, server_time_label, OBJPROP_TEXT, server_time_text);
+    ObjectSetInteger(0, server_time_label, OBJPROP_COLOR, clrAqua);
+
+    // Local Computer Time Header (Persistent)
+    string local_time_label = prefix + "PAC_LocalTime";
+    if(ObjectFind(0, local_time_label) < 0)
+    {
+        ObjectCreate(0, local_time_label, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, local_time_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, local_time_label, OBJPROP_FONT, "Arial Bold");
+        ObjectSetInteger(0, local_time_label, OBJPROP_FONTSIZE, 10);
+    }
+    MqlDateTime dt_local;
+    TimeToStruct(TimeLocal(), dt_local);
+    string local_time_text = StringFormat("Local Time:  %02d.%02d.%02d.%02d:%02d",
+                                          dt_local.day, dt_local.mon, dt_local.year % 100,
+                                          dt_local.hour, dt_local.min);
+    ObjectSetInteger(0, local_time_label, OBJPROP_XDISTANCE, x + 10);
+    ObjectSetInteger(0, local_time_label, OBJPROP_YDISTANCE, y + 50);
+    ObjectSetString(0, local_time_label, OBJPROP_TEXT, local_time_text);
+    ObjectSetInteger(0, local_time_label, OBJPROP_COLOR, clrLightGreen);
+
+    // Clear old commentary labels
+    for(int i = 0; i < 52; i++)
     {
         string label_name = prefix + "PAC_" + IntegerToString(i);
         ObjectDelete(0, label_name);
     }
 
-    // Draw commentary lines (show most recent)
+    // Draw commentary lines (newest on top)
     int start_index = MathMax(0, pa_commentary_count - max_lines);
+    int display_index = 0;
 
-    for(int i = start_index; i < pa_commentary_count; i++)
+    // Loop in reverse order to show newest first
+    for(int i = pa_commentary_count - 1; i >= start_index; i--)
     {
-        string label_name = prefix + "PAC_" + IntegerToString(i - start_index);
+        string label_name = prefix + "PAC_" + IntegerToString(display_index);
 
         // Get the text and check if it's a heading (contains emoji or all caps keywords)
         string text = price_action_commentary[i].text;
@@ -1022,9 +1065,11 @@ void DrawPriceActionCommentary()
         ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, is_heading ? 10 : 9);
 
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 35 + (i - start_index) * line_height);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 75 + display_index * line_height);  // Start after time headers
         ObjectSetString(0, label_name, OBJPROP_TEXT, display_text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, price_action_commentary[i].text_color);
+
+        display_index++;
     }
 
     // Show info message if no commentary yet
