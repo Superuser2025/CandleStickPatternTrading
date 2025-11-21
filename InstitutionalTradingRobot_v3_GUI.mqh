@@ -788,7 +788,7 @@ void CreateColorBox(int index, int x, int y, color clr)
     }
 
     ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
-    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y + 3);  // Offset to align with text baseline
+    ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);  // Align with text at same Y level
     ObjectSetInteger(0, name, OBJPROP_XSIZE, 16);
     ObjectSetInteger(0, name, OBJPROP_YSIZE, 16);
     ObjectSetInteger(0, name, OBJPROP_BGCOLOR, clr);
@@ -967,15 +967,63 @@ void DrawPriceActionCommentary()
     {
         string label_name = prefix + "PAC_" + IntegerToString(i - start_index);
 
+        // Get the text and check if it's a heading (contains emoji or all caps keywords)
+        string text = price_action_commentary[i].text;
+        bool is_heading = false;
+
+        // Check if it's a heading (starts with emoji or contains patterns like "PRICE", "ORDER BLOCK", etc.)
+        if(StringFind(text, "📍") >= 0 || StringFind(text, "🔊") >= 0 || StringFind(text, "🔇") >= 0 ||
+           StringFind(text, "✓") >= 0 || StringFind(text, "⚡") >= 0 || StringFind(text, "🎯") >= 0 ||
+           StringFind(text, "⛔") >= 0 || StringFind(text, "💥") >= 0 || StringFind(text, "📈") >= 0 ||
+           StringFind(text, "📉") >= 0 || StringFind(text, "🚀") >= 0 || StringFind(text, "🔻") >= 0 ||
+           StringFind(text, "⚠") >= 0 || StringFind(text, "🕯️") >= 0 || StringFind(text, "🟢") >= 0 ||
+           StringFind(text, "🔴") >= 0 || StringFind(text, "⚖️") >= 0 || StringFind(text, "📊") >= 0 ||
+           StringFind(text, "🐌") >= 0 || StringFind(text, "📦") >= 0 ||
+           (StringFind(text, "PRICE") >= 0 && StringFind(text, "RANGE") >= 0) ||
+           (StringFind(text, "ORDER BLOCK") >= 0) ||
+           (StringFind(text, "FVG") >= 0 && StringFind(text, "FILLED") >= 0) ||
+           (StringFind(text, "LIQUIDITY SWEPT") >= 0) ||
+           (StringFind(text, "MARKET STRUCTURE") >= 0) ||
+           (StringFind(text, "BREAK OF STRUCTURE") >= 0) ||
+           (StringFind(text, "CHANGE OF CHARACTER") >= 0) ||
+           (StringFind(text, "VOLUME") >= 0 && StringFind(text, "SPIKE") >= 0) ||
+           (StringFind(text, "PIN BAR") >= 0) ||
+           (StringFind(text, "ENGULFING") >= 0) ||
+           (StringFind(text, "DOJI") >= 0) ||
+           (StringFind(text, "TREND") >= 0) ||
+           (StringFind(text, "MOMENTUM") >= 0) ||
+           (StringFind(text, "VOLATILITY EXPANDING") >= 0) ||
+           (StringFind(text, "CONSOLIDATION") >= 0) ||
+           (StringFind(text, "BREAKOUT") >= 0) ||
+           (StringFind(text, "BREAKDOWN") >= 0) ||
+           (StringFind(text, "Testing EMA200") >= 0))
+        {
+            is_heading = true;
+        }
+
+        // Add timestamp for headings
+        string display_text = text;
+        if(is_heading && price_action_commentary[i].timestamp > 0)
+        {
+            string time_ago = FormatTimeDifference(price_action_commentary[i].timestamp);
+            display_text = text + "  [" + time_ago + "]";
+        }
+
         ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
         ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
-        ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");  // Monospace font for alignment
-        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 9);
+
+        // Use bold font for headings
+        if(is_heading)
+            ObjectSetString(0, label_name, OBJPROP_FONT, "Arial Bold");
+        else
+            ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");  // Monospace font for sub-items
+
+        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, is_heading ? 10 : 9);
 
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
         ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 35 + (i - start_index) * line_height);
-        ObjectSetString(0, label_name, OBJPROP_TEXT, price_action_commentary[i].text);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, display_text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, price_action_commentary[i].text_color);
     }
 

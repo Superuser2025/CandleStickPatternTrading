@@ -642,6 +642,235 @@ double GetRangeLow(int lookback)
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+
+//| Analyze Candlestick Patterns - Identify key reversal patterns    |
+//+------------------------------------------------------------------+
+void AnalyzeCandlestickPatterns()
+{
+    double open0 = iOpen(_Symbol, PreferredTimeframe, 1);
+    double high0 = iHigh(_Symbol, PreferredTimeframe, 1);
+    double low0 = iLow(_Symbol, PreferredTimeframe, 1);
+    double close0 = iClose(_Symbol, PreferredTimeframe, 1);
+    double body0 = MathAbs(close0 - open0);
+    double range0 = high0 - low0;
+
+    double open1 = iOpen(_Symbol, PreferredTimeframe, 2);
+    double close1 = iClose(_Symbol, PreferredTimeframe, 2);
+    double body1 = MathAbs(close1 - open1);
+
+    if(range0 < _Point) return;  // Avoid division by zero
+
+    // Pin Bar / Hammer / Shooting Star
+    double upper_wick = high0 - MathMax(open0, close0);
+    double lower_wick = MathMin(open0, close0) - low0;
+    double body_ratio = body0 / range0;
+
+    if(body_ratio < 0.3)  // Small body
+    {
+        if(lower_wick > body0 * 2 && upper_wick < body0)  // Long lower wick
+        {
+            AddPriceActionComment("🕯️ BULLISH PIN BAR detected at " + DoubleToString(low0, _Digits), clrLime, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Strong rejection of lower prices - Buyers stepping in", clrYellow, PRIORITY_IMPORTANT);
+        }
+        else if(upper_wick > body0 * 2 && lower_wick < body0)  // Long upper wick
+        {
+            AddPriceActionComment("🕯️ BEARISH PIN BAR detected at " + DoubleToString(high0, _Digits), clrRed, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Strong rejection of higher prices - Sellers stepping in", clrYellow, PRIORITY_IMPORTANT);
+        }
+    }
+
+    // Engulfing Patterns
+    if(body0 > body1 * 1.5 && body1 > 0)
+    {
+        bool bullish_engulf = (close1 < open1) && (close0 > open0) && (close0 > open1) && (open0 < close1);
+        bool bearish_engulf = (close1 > open1) && (close0 < open0) && (close0 < open1) && (open0 > close1);
+
+        if(bullish_engulf)
+        {
+            AddPriceActionComment("🟢 BULLISH ENGULFING pattern formed", clrLime, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Buyers overwhelmed sellers - Potential reversal/continuation", clrYellow, PRIORITY_IMPORTANT);
+        }
+        else if(bearish_engulf)
+        {
+            AddPriceActionComment("🔴 BEARISH ENGULFING pattern formed", clrRed, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Sellers overwhelmed buyers - Potential reversal/continuation", clrYellow, PRIORITY_IMPORTANT);
+        }
+    }
+
+    // Doji / Indecision Candles
+    if(body_ratio < 0.1)
+    {
+        AddPriceActionComment("⚖️ DOJI candle - Market indecision", clrOrange, PRIORITY_IMPORTANT);
+        AddPriceActionComment("→ Bulls and bears in equilibrium - Awaiting breakout direction", clrYellow, PRIORITY_INFO);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Analyze Trend Strength - Evaluate current trend momentum         |
+//+------------------------------------------------------------------+
+void AnalyzeTrendStrength()
+{
+    double ema_buffer[];
+    ArraySetAsSeries(ema_buffer, true);
+    if(CopyBuffer(h_EMA_200, 0, 0, 3, ema_buffer) <= 0) return;
+
+    double current_price = iClose(_Symbol, PreferredTimeframe, 0);
+    double price_distance = ((current_price - ema_buffer[0]) / ema_buffer[0]) * 100.0;
+
+    // EMA Slope (trend strength indicator)
+    double ema_slope = ema_buffer[0] - ema_buffer[2];
+
+    if(MathAbs(price_distance) > 5.0)
+    {
+        if(price_distance > 0)
+        {
+            AddPriceActionComment("📊 STRONG BULLISH TREND - Price " + DoubleToString(MathAbs(price_distance), 1) + "% above EMA200", clrLime, PRIORITY_IMPORTANT);
+            AddPriceActionComment("→ Extended move - Watch for potential pullback/consolidation", clrYellow, PRIORITY_INFO);
+        }
+        else
+        {
+            AddPriceActionComment("📊 STRONG BEARISH TREND - Price " + DoubleToString(MathAbs(price_distance), 1) + "% below EMA200", clrRed, PRIORITY_IMPORTANT);
+            AddPriceActionComment("→ Extended move - Watch for potential pullback/consolidation", clrYellow, PRIORITY_INFO);
+        }
+    }
+    else if(MathAbs(price_distance) < 1.0)
+    {
+        AddPriceActionComment("🎯 Price AT EMA200 - Key decision zone", clrOrange, PRIORITY_IMPORTANT);
+        AddPriceActionComment("→ Major support/resistance test - Breakout or bounce likely", clrYellow, PRIORITY_IMPORTANT);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Analyze Momentum - Detect acceleration and deceleration          |
+//+------------------------------------------------------------------+
+void AnalyzeMomentum()
+{
+    double atr_buffer[];
+    ArraySetAsSeries(atr_buffer, true);
+    if(CopyBuffer(h_ATR, 0, 0, 5, atr_buffer) <= 0) return;
+
+    // Compare recent candle ranges to ATR
+    double current_range = iHigh(_Symbol, PreferredTimeframe, 1) - iLow(_Symbol, PreferredTimeframe, 1);
+    double avg_atr = (atr_buffer[0] + atr_buffer[1] + atr_buffer[2]) / 3.0;
+
+    if(current_range > avg_atr * 1.5)
+    {
+        bool bullish = iClose(_Symbol, PreferredTimeframe, 1) > iOpen(_Symbol, PreferredTimeframe, 1);
+        if(bullish)
+        {
+            AddPriceActionComment("⚡ MOMENTUM SURGE - Bullish acceleration detected", clrLime, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Strong buying pressure - Trend may be accelerating", clrYellow, PRIORITY_IMPORTANT);
+        }
+        else
+        {
+            AddPriceActionComment("⚡ MOMENTUM SURGE - Bearish acceleration detected", clrRed, PRIORITY_CRITICAL);
+            AddPriceActionComment("→ Strong selling pressure - Trend may be accelerating", clrYellow, PRIORITY_IMPORTANT);
+        }
+    }
+    else if(current_range < avg_atr * 0.5)
+    {
+        AddPriceActionComment("🐌 MOMENTUM SLOWING - Reduced volatility", clrGray, PRIORITY_INFO);
+        AddPriceActionComment("→ Market consolidating - Potential breakout setup forming", clrOrange, PRIORITY_INFO);
+    }
+
+    // Check if ATR is expanding (volatility increasing)
+    if(atr_buffer[0] > atr_buffer[4] * 1.3)
+    {
+        AddPriceActionComment("📈 VOLATILITY EXPANDING - ATR increasing", clrOrange, PRIORITY_IMPORTANT);
+        AddPriceActionComment("→ Larger moves expected - Adjust position sizing", clrYellow, PRIORITY_INFO);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Detect Consolidation Zones - Identify ranging markets            |
+//+------------------------------------------------------------------+
+void DetectConsolidation()
+{
+    // Calculate range of last 10 bars
+    double highest = iHigh(_Symbol, PreferredTimeframe, iHighest(_Symbol, PreferredTimeframe, MODE_HIGH, 10, 1));
+    double lowest = iLow(_Symbol, PreferredTimeframe, iLowest(_Symbol, PreferredTimeframe, MODE_LOW, 10, 1));
+    double range = highest - lowest;
+
+    double atr_buffer[];
+    ArraySetAsSeries(atr_buffer, true);
+    if(CopyBuffer(h_ATR, 0, 0, 1, atr_buffer) <= 0) return;
+
+    double expected_range = atr_buffer[0] * 10;  // Expected range for 10 bars
+
+    if(range < expected_range * 0.6)
+    {
+        AddPriceActionComment("📦 CONSOLIDATION ZONE detected - Tight range", clrCyan, PRIORITY_CRITICAL);
+        AddPriceActionComment("→ Compression phase - Breakout likely imminent", clrYellow, PRIORITY_CRITICAL);
+        AddPriceActionComment("→ Range: " + DoubleToString(lowest, _Digits) + " - " + DoubleToString(highest, _Digits), clrAqua, PRIORITY_INFO);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Detect Breakouts - Identify when price breaks key levels         |
+//+------------------------------------------------------------------+
+void DetectBreakouts()
+{
+    double current_high = iHigh(_Symbol, PreferredTimeframe, 1);
+    double current_low = iLow(_Symbol, PreferredTimeframe, 1);
+    double current_close = iClose(_Symbol, PreferredTimeframe, 1);
+
+    // Get recent swing high/low (last 20 bars)
+    double swing_high = iHigh(_Symbol, PreferredTimeframe, iHighest(_Symbol, PreferredTimeframe, MODE_HIGH, 20, 2));
+    double swing_low = iLow(_Symbol, PreferredTimeframe, iLowest(_Symbol, PreferredTimeframe, MODE_LOW, 20, 2));
+
+    // Check for breakout above swing high
+    if(current_high > swing_high && current_close > swing_high)
+    {
+        AddPriceActionComment("🚀 BULLISH BREAKOUT - Price broke above swing high at " + DoubleToString(swing_high, _Digits), clrLime, PRIORITY_CRITICAL);
+        AddPriceActionComment("→ Resistance turned support - Look for continuation", clrYellow, PRIORITY_CRITICAL);
+        AddPriceActionComment("→ Watch for retest of breakout level", clrAqua, PRIORITY_IMPORTANT);
+    }
+
+    // Check for breakdown below swing low
+    if(current_low < swing_low && current_close < swing_low)
+    {
+        AddPriceActionComment("🔻 BEARISH BREAKDOWN - Price broke below swing low at " + DoubleToString(swing_low, _Digits), clrRed, PRIORITY_CRITICAL);
+        AddPriceActionComment("→ Support turned resistance - Look for continuation", clrYellow, PRIORITY_CRITICAL);
+        AddPriceActionComment("→ Watch for retest of breakdown level", clrAqua, PRIORITY_IMPORTANT);
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Analyze Support/Resistance Tests - Track key level interactions  |
+//+------------------------------------------------------------------+
+void AnalyzeSupportResistanceTests()
+{
+    double current_price = iClose(_Symbol, PreferredTimeframe, 0);
+    double current_high = iHigh(_Symbol, PreferredTimeframe, 1);
+    double current_low = iLow(_Symbol, PreferredTimeframe, 1);
+
+    double ema_buffer[];
+    ArraySetAsSeries(ema_buffer, true);
+    if(CopyBuffer(h_EMA_200, 0, 0, 1, ema_buffer) <= 0) return;
+    double ema200 = ema_buffer[0];
+
+    double atr_buffer[];
+    ArraySetAsSeries(atr_buffer, true);
+    if(CopyBuffer(h_ATR, 0, 0, 1, atr_buffer) <= 0) return;
+    double atr = atr_buffer[0];
+
+    // Check if price is testing EMA200
+    double distance_to_ema = MathAbs(current_price - ema200);
+    if(distance_to_ema < atr * 0.5)
+    {
+        if(current_price > ema200)
+        {
+            AddPriceActionComment("🎯 Testing EMA200 SUPPORT at " + DoubleToString(ema200, _Digits), clrCyan, PRIORITY_IMPORTANT);
+            AddPriceActionComment("→ Key dynamic support - Watch for bounce or break", clrYellow, PRIORITY_IMPORTANT);
+        }
+        else
+        {
+            AddPriceActionComment("🎯 Testing EMA200 RESISTANCE at " + DoubleToString(ema200, _Digits), clrOrange, PRIORITY_IMPORTANT);
+            AddPriceActionComment("→ Key dynamic resistance - Watch for rejection or break", clrYellow, PRIORITY_IMPORTANT);
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
 //| Analyze FVG Fills - Track and explain Fair Value Gap fills       |
 //+------------------------------------------------------------------+
 void AnalyzeFVGFills()
@@ -1024,11 +1253,28 @@ void PerformPriceActionAnalysis()
     pa_commentary_count = 0;
 
     AddPriceActionComment("═══ PRICE ACTION ANALYSIS ═══", clrYellow, PRIORITY_CRITICAL);
-    AddPriceActionComment("Time: " + TimeToString(TimeCurrent(), TIME_DATE|TIME_MINUTES), clrWhite, PRIORITY_INFO);
+
+    // Show both Server Time and Local Time clearly
+    datetime server_time = TimeCurrent();
+    datetime local_time = TimeLocal();
+
+    AddPriceActionComment("Server Time (MT5): " + TimeToString(server_time, TIME_DATE|TIME_MINUTES), clrCyan, PRIORITY_INFO);
+    AddPriceActionComment("Your Local Time: " + TimeToString(local_time, TIME_DATE|TIME_MINUTES), clrAqua, PRIORITY_INFO);
     AddPriceActionComment("", clrWhite, PRIORITY_INFO);  // Spacing
 
-    // Run all analysis modules
+    // Run all comprehensive analysis modules
+    AddPriceActionComment("", clrWhite, PRIORITY_INFO);  // Spacing
+
+    // Core price action analysis
     AnalyzePricePosition();
+    AnalyzeCandlestickPatterns();
+    AnalyzeTrendStrength();
+    AnalyzeMomentum();
+    AnalyzeSupportResistanceTests();
+    DetectConsolidation();
+    DetectBreakouts();
+
+    // Smart money concepts
     AnalyzeFVGFills();
     AnalyzeOrderBlockInteractions();
     AnalyzeLiquiditySweepsDetailed();

@@ -470,6 +470,27 @@ void AddComment(string text, color text_color, int priority)
 }
 
 //+------------------------------------------------------------------+
+//| Format Time Difference (e.g., "3s ago", "2m ago", "1h ago")     |
+//+------------------------------------------------------------------+
+string FormatTimeDifference(datetime past_time)
+{
+    datetime current_time = TimeCurrent();
+    int diff_seconds = (int)(current_time - past_time);
+
+    if(diff_seconds < 0) return "Just now";
+    if(diff_seconds < 60) return IntegerToString(diff_seconds) + "s ago";
+
+    int diff_minutes = diff_seconds / 60;
+    if(diff_minutes < 60) return IntegerToString(diff_minutes) + "m ago";
+
+    int diff_hours = diff_minutes / 60;
+    if(diff_hours < 24) return IntegerToString(diff_hours) + "h ago";
+
+    int diff_days = diff_hours / 24;
+    return IntegerToString(diff_days) + "d ago";
+}
+
+//+------------------------------------------------------------------+
 //| Add Price Action Commentary (Educational Detailed Analysis)      |
 //+------------------------------------------------------------------+
 void AddPriceActionComment(string text, color text_color, int priority)
