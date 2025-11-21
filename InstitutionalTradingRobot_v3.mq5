@@ -378,6 +378,10 @@ TradeDecision       last_decision;
 CommentaryLine      commentary_buffer[50];
 int                 commentary_count = 0;
 
+// Button Status System (displayed separately near MARKET STATUS)
+CommentaryLine      button_status_buffer[10];  // Only keep last 10 button changes
+int                 button_status_count = 0;
+
 // Pattern Performance (FIX #17)
 PatternPerformance  pattern_performance[100];
 int                 performance_count = 0;
@@ -404,11 +408,43 @@ double              dynamic_tp1 = 2.0;
 string              prefix = "IGTR3_";
 
 //+------------------------------------------------------------------+
+//| Add Button Status (displayed near MARKET STATUS)                 |
+//+------------------------------------------------------------------+
+void AddButtonStatus(string text, color text_color)
+{
+    // Shift buffer if full (keep only last 10)
+    if(button_status_count >= 10)
+    {
+        for(int i = 0; i < 9; i++)
+            button_status_buffer[i] = button_status_buffer[i+1];
+        button_status_count = 9;
+    }
+
+    button_status_buffer[button_status_count].text = text;
+    button_status_buffer[button_status_count].text_color = text_color;
+    button_status_buffer[button_status_count].timestamp = TimeCurrent();
+    button_status_buffer[button_status_count].priority = PRIORITY_CRITICAL;
+    button_status_count++;
+}
+
+//+------------------------------------------------------------------+
 //| Add Commentary Line (must be defined before includes)            |
 //+------------------------------------------------------------------+
 void AddComment(string text, color text_color, int priority)
 {
     if(!g_ShowCommentary) return;
+
+    // Button-related messages go to button status display instead
+    bool is_button_message = (StringFind(text, "switched") >= 0) ||
+                              (StringFind(text, "MODE:") >= 0) ||
+                              (StringFind(text, "ENABLED") >= 0) ||
+                              (StringFind(text, "INDICATOR MODE") >= 0);
+
+    if(is_button_message)
+    {
+        AddButtonStatus(text, text_color);
+        return;  // Don't add to commentary
+    }
 
     // Shift buffer if full
     if(commentary_count >= 50)
@@ -519,6 +555,9 @@ int OnInit()
 
     // Create interactive GUI with clickable buttons
     CreateInteractiveDashboard();
+
+    // Initialize button status display
+    DrawButtonStatus();
 
     Print("✓ Interactive GUI created - Click buttons to toggle settings!");
 
@@ -899,6 +938,7 @@ void OnTick()
                 UpdateDashboard();
                 DrawDashboard();  // Checks g_ShowDashboard internally
                 DrawBigCommentary();  // Checks g_ShowCommentary internally
+                DrawButtonStatus();  // Always show button status
                 DrawColorLegend();  // Checks g_ShowColorLegend internally
                 return;
             }
@@ -1064,6 +1104,9 @@ void OnTick()
     // Draw BIG READABLE Commentary
     DrawBigCommentary();  // Function checks g_ShowCommentary internally
 
+    // Draw Button Status (always show)
+    DrawButtonStatus();
+
     // Draw Color Legend
     DrawColorLegend();  // Function checks g_ShowColorLegend internally
 }
@@ -1188,6 +1231,7 @@ void OnChartEvent(const int id,
                     }
                     DrawDashboard();
                     DrawBigCommentary();
+                    DrawButtonStatus();
                     DrawColorLegend();
                 }
 

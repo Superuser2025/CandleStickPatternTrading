@@ -10,6 +10,7 @@ void UpdateAllButtons();
 void UpdateSetting(string setting, bool value);
 void CreateColorBox(int index, int x, int y, color clr);
 void CreateLegendLabel(int index, int x, int y, string text, color clr, int font_size, bool bold);
+void DrawButtonStatus();
 
 // Button structure
 struct Button
@@ -390,11 +391,11 @@ void DrawBigCommentary()
         return;
     }
 
-    int x = 320;  // Right side of buttons
-    int y = 90;   // MOVED DOWN to avoid overlap with title
-    int width = 800;
-    int line_height = 28;  // Increased line height to prevent overlap
-    int max_lines = 5;  // Only show last 5 actions
+    int x = 750;   // Further RIGHT to avoid any button overlap
+    int y = 50;    // Top of chart
+    int width = 550;  // Narrower to fit better
+    int line_height = 24;  // Clean spacing
+    int max_lines = 4;  // Only show last 4 actions to keep it compact
 
     // Background box - Sized properly for max_lines
     if(ObjectFind(0, box_name) < 0)
@@ -403,8 +404,8 @@ void DrawBigCommentary()
         ObjectSetInteger(0, box_name, OBJPROP_XDISTANCE, x);
         ObjectSetInteger(0, box_name, OBJPROP_YDISTANCE, y);
         ObjectSetInteger(0, box_name, OBJPROP_XSIZE, width);
-        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, 50 + max_lines * line_height);  // Added padding for title
-        ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'20,20,30');
+        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, 35 + max_lines * line_height);  // Compact
+        ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'20,25,35');  // Slightly different shade
         ObjectSetInteger(0, box_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
         ObjectSetInteger(0, box_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetInteger(0, box_name, OBJPROP_BACK, true);
@@ -416,16 +417,24 @@ void DrawBigCommentary()
     {
         ObjectCreate(0, title_name, OBJ_LABEL, 0, 0, 0);
         ObjectSetInteger(0, title_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 8);  // Increased padding
+        ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 6);
         ObjectSetInteger(0, title_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetString(0, title_name, OBJPROP_FONT, "Arial Bold");
-        ObjectSetInteger(0, title_name, OBJPROP_FONTSIZE, 14);
+        ObjectSetInteger(0, title_name, OBJPROP_FONTSIZE, 12);
         ObjectSetString(0, title_name, OBJPROP_TEXT, "═══ REAL-TIME ANALYSIS ═══");
-        ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrWhite);
+        ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrYellow);
     }
 
     // Draw commentary lines - Clear spacing between lines
     int start_index = MathMax(0, commentary_count - max_lines);
+
+    // Clear old labels to prevent overlap
+    for(int j = 0; j < 50; j++)
+    {
+        string old_label = prefix + "Comment_" + IntegerToString(j);
+        if(j < start_index || j >= commentary_count)
+            ObjectDelete(0, old_label);
+    }
 
     for(int i = start_index; i < commentary_count; i++)
     {
@@ -436,14 +445,31 @@ void DrawBigCommentary()
             ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
             ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
             ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
-            ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");
-            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 12);  // Slightly smaller for better fit
+            ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");  // More readable than Consolas
+            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
         }
 
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 40 + (i - start_index) * line_height);  // More padding after title
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 28 + (i - start_index) * line_height);
         ObjectSetString(0, label_name, OBJPROP_TEXT, commentary_buffer[i].text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, commentary_buffer[i].text_color);
+    }
+
+    // Show message if no commentary yet
+    if(commentary_count == 0)
+    {
+        string label_name = prefix + "Comment_0";
+        if(ObjectFind(0, label_name) < 0)
+        {
+            ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
+            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
+        }
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 28);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, "Waiting for market analysis...");
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrGray);
     }
 }
 
@@ -576,6 +602,89 @@ void CreateLegendLabel(int index, int x, int y, string text, color clr, int font
     ObjectSetInteger(0, name, OBJPROP_YDISTANCE, y);
     ObjectSetString(0, name, OBJPROP_TEXT, text);
     ObjectSetInteger(0, name, OBJPROP_COLOR, clr);
+}
+
+//+------------------------------------------------------------------+
+//| DRAW BUTTON STATUS (Near MARKET STATUS as requested)             |
+//+------------------------------------------------------------------+
+void DrawButtonStatus()
+{
+    string box_name = prefix + "ButtonStatus_Box";
+
+    // Button status displayed BELOW at MARKET STATUS level as user requested
+    int x = 320;   // Aligned with commentary
+    int y = 160;   // MOVED DOWN - below Real-Time Analysis, above chart main area
+    int width = 800;
+    int line_height = 22;  // Compact spacing
+    int max_lines = 3;     // Only show last 3 button changes to keep it compact
+
+    // Background box - Compact and clean
+    if(ObjectFind(0, box_name) < 0)
+    {
+        ObjectCreate(0, box_name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, box_name, OBJPROP_XDISTANCE, x);
+        ObjectSetInteger(0, box_name, OBJPROP_YDISTANCE, y);
+        ObjectSetInteger(0, box_name, OBJPROP_XSIZE, width);
+        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, 35 + max_lines * line_height);
+        ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'15,15,25');  // Darker to distinguish from commentary
+        ObjectSetInteger(0, box_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+        ObjectSetInteger(0, box_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, box_name, OBJPROP_BACK, true);
+    }
+
+    // Title
+    string title_name = prefix + "ButtonStatus_Title";
+    if(ObjectFind(0, title_name) < 0)
+    {
+        ObjectCreate(0, title_name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, title_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 6);
+        ObjectSetInteger(0, title_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, title_name, OBJPROP_FONT, "Arial Bold");
+        ObjectSetInteger(0, title_name, OBJPROP_FONTSIZE, 11);
+        ObjectSetString(0, title_name, OBJPROP_TEXT, "══ BUTTON STATUS ══");
+        ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrCyan);
+    }
+
+    // Clear old button status labels
+    for(int i = 0; i < 10; i++)
+    {
+        string label_name = prefix + "ButtonStatus_" + IntegerToString(i);
+        ObjectDelete(0, label_name);
+    }
+
+    // Draw button status lines - show last few button changes
+    int start_index = MathMax(0, button_status_count - max_lines);
+
+    for(int i = start_index; i < button_status_count; i++)
+    {
+        string label_name = prefix + "ButtonStatus_" + IntegerToString(i);
+
+        ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+        ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
+        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
+
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 28 + (i - start_index) * line_height);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, button_status_buffer[i].text);
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, button_status_buffer[i].text_color);
+    }
+
+    // Show message if no button changes yet
+    if(button_status_count == 0)
+    {
+        string label_name = prefix + "ButtonStatus_0";
+        ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
+        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
+        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 28);
+        ObjectSetString(0, label_name, OBJPROP_TEXT, "Ready - Click buttons to configure filters...");
+        ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrGray);
+    }
 }
 
 //+------------------------------------------------------------------+
