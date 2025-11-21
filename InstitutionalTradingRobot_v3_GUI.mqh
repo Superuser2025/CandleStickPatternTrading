@@ -26,7 +26,7 @@ struct Button
     string setting;     // Which setting this controls
 };
 
-Button gui_buttons[40];  // Increased for visual control buttons
+Button gui_buttons[50];  // Enough for all buttons + future expansion
 int button_count = 0;
 
 //+------------------------------------------------------------------+
@@ -247,8 +247,9 @@ void CreateToggleButton(string name, int x, int y, int width, int height,
                        string text, bool initial_state,
                        color col_on, color col_off, string setting_name)
 {
-    if(button_count >= 25) return;
+    if(button_count >= 50) return;  // Fixed limit
 
+    // Store button data
     gui_buttons[button_count].name = prefix + name;
     gui_buttons[button_count].x = x;
     gui_buttons[button_count].y = y;
@@ -260,8 +261,8 @@ void CreateToggleButton(string name, int x, int y, int width, int height,
     gui_buttons[button_count].color_off = col_off;
     gui_buttons[button_count].setting = setting_name;
 
-    // Create button object
-    ObjectCreate(0, gui_buttons[button_count].name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
+    // Create proper button object (OBJ_BUTTON has built-in text and click handling)
+    ObjectCreate(0, gui_buttons[button_count].name, OBJ_BUTTON, 0, 0, 0);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_XDISTANCE, x);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_YDISTANCE, y);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_XSIZE, width);
@@ -269,23 +270,15 @@ void CreateToggleButton(string name, int x, int y, int width, int height,
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BGCOLOR,
                     initial_state ? col_on : col_off);
-    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_COLOR, clrWhite);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BORDER_COLOR, clrWhite);
-    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_WIDTH, 2);
-    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_SELECTABLE, true);  // MAKE CLICKABLE
-    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_SELECTED, false);
-
-    // Create text label on button
-    string label_name = gui_buttons[button_count].name + "_TXT";
-    ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
-    ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-    ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 8);
-    ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-    ObjectSetString(0, label_name, OBJPROP_FONT, "Arial Bold");
-    ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 11);
-    ObjectSetString(0, label_name, OBJPROP_TEXT,
+    ObjectSetString(0, gui_buttons[button_count].name, OBJPROP_FONT, "Arial Bold");
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_FONTSIZE, 10);
+    ObjectSetString(0, gui_buttons[button_count].name, OBJPROP_TEXT,
                    text + (initial_state ? " [ON]" : " [OFF]"));
-    ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrWhite);
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_STATE, false);  // Not pressed
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_SELECTABLE, false);  // Not moveable
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_ZORDER, 10);  // On top
 
     button_count++;
 }
@@ -314,47 +307,22 @@ void UpdateAllButtons()
 {
     for(int i = 0; i < button_count; i++)
     {
+        // Update background color based on state
         color bg_color = gui_buttons[i].state ? gui_buttons[i].color_on : gui_buttons[i].color_off;
         ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_BGCOLOR, bg_color);
 
-        string label_name = gui_buttons[i].name + "_TXT";
-        ObjectSetString(0, label_name, OBJPROP_TEXT,
-                       gui_buttons[i].text + (gui_buttons[i].state ? " [ON]" : " [OFF]"));
+        // Update button text with state indicator
+        string button_text = gui_buttons[i].text + (gui_buttons[i].state ? " [ON]" : " [OFF]");
+        ObjectSetString(0, gui_buttons[i].name, OBJPROP_TEXT, button_text);
+
+        // Reset button pressed state
+        ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_STATE, false);
     }
+
+    // Force chart redraw
+    ChartRedraw();
 }
 
-//+------------------------------------------------------------------+
-//| HANDLE BUTTON CLICK                                              |
-//+------------------------------------------------------------------+
-void HandleButtonClick(int x, int y)
-{
-    for(int i = 0; i < button_count; i++)
-    {
-        if(x >= gui_buttons[i].x && x <= gui_buttons[i].x + gui_buttons[i].width &&
-           y >= gui_buttons[i].y && y <= gui_buttons[i].y + gui_buttons[i].height)
-        {
-            // Toggle button state
-            gui_buttons[i].state = !gui_buttons[i].state;
-
-            // Update the actual setting
-            UpdateSetting(gui_buttons[i].setting, gui_buttons[i].state);
-
-            // Visual feedback
-            UpdateAllButtons();
-
-            // Log the change
-            Print(">>> SETTING CHANGED: ", gui_buttons[i].setting, " = ",
-                 gui_buttons[i].state ? "ON" : "OFF");
-
-            AddComment("✓ " + gui_buttons[i].text + " switched " +
-                      (gui_buttons[i].state ? "ON" : "OFF"),
-                      gui_buttons[i].state ? clrLime : clrOrange,
-                      PRIORITY_CRITICAL);
-
-            break;
-        }
-    }
-}
 
 //+------------------------------------------------------------------+
 //| UPDATE ACTUAL SETTING VARIABLE                                   |

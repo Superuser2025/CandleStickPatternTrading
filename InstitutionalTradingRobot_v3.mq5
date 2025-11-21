@@ -1067,11 +1067,9 @@ void OnChartEvent(const int id,
                   const double &dparam,
                   const string &sparam)
 {
-    // Handle button clicks - when a selectable object is clicked
+    // Handle button clicks - OBJ_BUTTON generates CHARTEVENT_OBJECT_CLICK
     if(id == CHARTEVENT_OBJECT_CLICK)
     {
-        Print(">>> Object clicked: ", sparam);
-
         // Check if clicked object is one of our buttons
         for(int i = 0; i < button_count; i++)
         {
@@ -1080,43 +1078,51 @@ void OnChartEvent(const int id,
                 // Toggle button state
                 gui_buttons[i].state = !gui_buttons[i].state;
 
-                // Update the actual setting
+                // Update the actual setting variable
                 UpdateSetting(gui_buttons[i].setting, gui_buttons[i].state);
 
-                // Visual feedback
-                UpdateAllButtons();
+                // Update button visual immediately
+                color bg_color = gui_buttons[i].state ? gui_buttons[i].color_on : gui_buttons[i].color_off;
+                ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_BGCOLOR, bg_color);
+
+                string button_text = gui_buttons[i].text + (gui_buttons[i].state ? " [ON]" : " [OFF]");
+                ObjectSetString(0, gui_buttons[i].name, OBJPROP_TEXT, button_text);
+
+                // Reset button state (so it doesn't stay pressed)
+                ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_STATE, false);
 
                 // Log the change
-                Print(">>> SETTING CHANGED: ", gui_buttons[i].setting, " = ",
-                     gui_buttons[i].state ? "ON" : "OFF");
+                Print("✓ BUTTON TOGGLED: ", gui_buttons[i].setting, " = ",
+                     (gui_buttons[i].state ? "ON" : "OFF"));
 
+                // Add visual feedback comment
                 AddComment("✓ " + gui_buttons[i].text + " switched " +
                           (gui_buttons[i].state ? "ON" : "OFF"),
                           gui_buttons[i].state ? clrLime : clrOrange,
                           PRIORITY_CRITICAL);
 
-                // Update visual elements immediately
-                DrawLiquidityZones();
-                DrawFVGZones();
-                DrawOrderBlocks();
-                if(has_active_pattern)
+                // For visual toggle buttons, redraw chart elements immediately
+                if(StringFind(gui_buttons[i].setting, "SHOW_") >= 0)
                 {
-                    DrawPatternBox(active_pattern);
-                    DrawPatternLabel(active_pattern);
+                    DrawLiquidityZones();
+                    DrawFVGZones();
+                    DrawOrderBlocks();
+                    if(has_active_pattern)
+                    {
+                        DrawPatternBox(active_pattern);
+                        DrawPatternLabel(active_pattern);
+                    }
+                    DrawDashboard();
+                    DrawBigCommentary();
+                    DrawColorLegend();
                 }
-                DrawDashboard();
-                DrawBigCommentary();
-                DrawColorLegend();
 
-                // Force chart redraw to show/hide colors immediately
+                // Force chart redraw
                 ChartRedraw();
 
                 break;
             }
         }
-
-        // Deselect the object (so it doesn't stay highlighted)
-        ObjectSetInteger(0, sparam, OBJPROP_SELECTED, false);
     }
 }
 
