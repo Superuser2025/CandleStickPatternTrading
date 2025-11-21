@@ -675,6 +675,7 @@ void OnTick()
     DetectMarketRegime();
 
     string regime_text = "Regime: ";
+    string regime_detail = "";
     color regime_color = clrWhite;
 
     switch(current_regime)
@@ -682,22 +683,23 @@ void OnTick()
         case REGIME_TREND:
             regime_text += "TRENDING";
             regime_color = clrLime;
-            AddComment(regime_text, regime_color, PRIORITY_IMPORTANT);
-            AddComment("ADVICE: Trade WITH momentum, let winners run", clrAqua, PRIORITY_IMPORTANT);
+            regime_detail = current_bias == BIAS_BULLISH ? " (Uptrend)" : " (Downtrend)";
+            AddComment(regime_text + regime_detail, regime_color, PRIORITY_IMPORTANT);
+            AddComment("ADVICE: Momentum-based - Ride the trend, trail stops", clrAqua, PRIORITY_IMPORTANT);
             break;
 
         case REGIME_RANGE:
             regime_text += "RANGING";
             regime_color = clrYellow;
-            AddComment(regime_text, regime_color, PRIORITY_IMPORTANT);
-            AddComment("ADVICE: Mean reversion - Buy dips, sell rallies at extremes", clrAqua, PRIORITY_IMPORTANT);
+            AddComment(regime_text + " (Sideways consolidation)", regime_color, PRIORITY_IMPORTANT);
+            AddComment("ADVICE: Mean reversion - Fade extremes, tight targets", clrAqua, PRIORITY_IMPORTANT);
             break;
 
         case REGIME_TRANSITION:
-            regime_text += "CHOPPY/TRANSITION";
+            regime_text += "CHOPPY";
             regime_color = clrOrange;
-            AddComment(regime_text, regime_color, PRIORITY_IMPORTANT);
-            AddComment("ADVICE: Stay out or wait for clear breakout", clrRed, PRIORITY_CRITICAL);
+            AddComment(regime_text + " (Uncertain direction)", regime_color, PRIORITY_IMPORTANT);
+            AddComment("ADVICE: Low probability environment - Skip or wait for clarity", clrRed, PRIORITY_CRITICAL);
             break;
     }
 
@@ -772,8 +774,19 @@ void OnTick()
 
     if(has_active_pattern)
     {
-        AddComment("✓ PATTERN: " + active_pattern.name + " [Strength: " + IntegerToString(active_pattern.strength) + "/5]",
+        string direction_arrow = active_pattern.is_bullish ? "↑" : "↓";
+        AddComment("✓ PATTERN: " + active_pattern.name + " " + direction_arrow + " [" +
+                  IntegerToString(active_pattern.strength) + "★/" + IntegerToString(5) + "]",
                   active_pattern.is_bullish ? clrLime : clrRed, PRIORITY_CRITICAL);
+
+        // Show multi-timeframe patterns if available
+        if(has_active_pattern_h1)
+            AddComment("  H1: " + active_pattern_h1.name + " [" + IntegerToString(active_pattern_h1.strength) + "★]",
+                      active_pattern_h1.is_bullish ? clrLime : clrRed, PRIORITY_INFO);
+
+        if(has_active_pattern_m15)
+            AddComment("  M15: " + active_pattern_m15.name + " [" + IntegerToString(active_pattern_m15.strength) + "★]",
+                      active_pattern_m15.is_bullish ? clrLime : clrRed, PRIORITY_INFO);
 
         // Draw pattern visualization
         DrawPatternBox(active_pattern);
@@ -784,7 +797,9 @@ void OnTick()
         {
             if(!IsPatternValid())
             {
-                AddComment("⚠ Pattern EXPIRED (too old) - Waiting for fresh setup", clrOrange, PRIORITY_IMPORTANT);
+                int bars_old = Bars(_Symbol, PreferredTimeframe, active_pattern.detected_time, TimeCurrent()) - 1;
+                AddComment("⚠ Pattern EXPIRED (" + IntegerToString(bars_old) + " bars old) - Need fresh setup",
+                          clrOrange, PRIORITY_IMPORTANT);
                 AddComment("ADVICE: Stale patterns lose edge - Only trade fresh signals", clrYellow, PRIORITY_INFO);
                 has_active_pattern = false;
             }
@@ -793,6 +808,7 @@ void OnTick()
     else
     {
         AddComment("No valid patterns detected - Waiting...", clrGray, PRIORITY_INFO);
+        AddComment("ADVICE: Patience is key - Wait for high-quality setups", clrYellow, PRIORITY_INFO);
     }
 
     //═══════════════════════════════════════════════════════════════
@@ -892,28 +908,53 @@ void OnTick()
         TradeDecision decision = EvaluateTradeDecision();
         last_decision = decision;
 
+        // Enhanced confluence reporting
+        int factors_needed = dynamic_confluence_required - decision.confluence_score;
+        string confluence_status = "";
+
+        if(decision.confluence_score >= dynamic_confluence_required)
+            confluence_status = " ✓ THRESHOLD MET";
+        else if(factors_needed == 1)
+            confluence_status = " (Need 1 more)";
+        else
+            confluence_status = " (Need " + IntegerToString(factors_needed) + " more)";
+
         AddComment("═══ CONFLUENCE: " + IntegerToString(decision.confluence_score) + "/" +
-                  IntegerToString(dynamic_confluence_required) + " ═══",
+                  IntegerToString(dynamic_confluence_required) + confluence_status + " ═══",
                   decision.confluence_score >= dynamic_confluence_required ? clrLime : clrOrange,
                   PRIORITY_CRITICAL);
 
-        // Show passed filters
+        // Show passed filters (limited to 3 for brevity due to 5-line limit)
         if(decision.passed_count > 0)
         {
-            AddComment("PASSED FILTERS:", clrLime, PRIORITY_IMPORTANT);
-            for(int i = 0; i < decision.passed_count; i++)
-                AddComment("  ✓ " + decision.passed_filters[i], clrLime, PRIORITY_INFO);
+            string passed_summary = "✓ PASSED (" + IntegerToString(decision.passed_count) + "): ";
+            for(int i = 0; i < decision.passed_count && i < 3; i++)
+            {
+                if(i > 0) passed_summary += ", ";
+                passed_summary += decision.passed_filters[i];
+            }
+            if(decision.passed_count > 3)
+                passed_summary += "... (+" + IntegerToString(decision.passed_count - 3) + " more)";
+
+            AddComment(passed_summary, clrLime, PRIORITY_IMPORTANT);
         }
 
-        // Show failed filters
+        // Show failed filters (limited to 3 for brevity)
         if(decision.failed_count > 0)
         {
-            AddComment("FAILED FILTERS:", clrRed, PRIORITY_IMPORTANT);
-            for(int i = 0; i < decision.failed_count; i++)
-                AddComment("  ✗ " + decision.failed_filters[i], clrRed, PRIORITY_INFO);
+            string failed_summary = "✗ FAILED (" + IntegerToString(decision.failed_count) + "): ";
+            for(int i = 0; i < decision.failed_count && i < 3; i++)
+            {
+                if(i > 0) failed_summary += ", ";
+                failed_summary += decision.failed_filters[i];
+            }
+            if(decision.failed_count > 3)
+                failed_summary += "... (+" + IntegerToString(decision.failed_count - 3) + " more)";
+
+            AddComment(failed_summary, clrRed, PRIORITY_IMPORTANT);
         }
 
-        // Decision & Advice
+        // Decision & Advice - WITH FULL DETAILS
         string decision_text = "";
         color decision_color = clrWhite;
 
@@ -934,7 +975,31 @@ void OnTick()
         }
 
         AddComment(decision_text, decision_color, PRIORITY_CRITICAL);
-        AddComment("REASON: " + decision.explanation, clrWhite, PRIORITY_IMPORTANT);
+
+        // Add detailed signal information
+        string signal_direction = active_pattern.is_bullish ? "BUY" : "SELL";
+        color signal_color = active_pattern.is_bullish ? clrLime : clrRed;
+        AddComment("SIGNAL: " + signal_direction + " (" + EnumToString(PreferredTimeframe) + ")",
+                  signal_color, PRIORITY_CRITICAL);
+
+        // Add timestamp
+        datetime current_time = TimeCurrent();
+        AddComment("TIME: " + TimeToString(current_time, TIME_DATE|TIME_MINUTES),
+                  clrWhite, PRIORITY_IMPORTANT);
+
+        // Show aligned factors in REASON
+        string factors_aligned = "";
+        for(int i = 0; i < decision.passed_count && i < 5; i++)  // Show max 5 factors
+        {
+            if(i > 0) factors_aligned += ", ";
+            factors_aligned += decision.passed_filters[i];
+        }
+
+        AddComment("REASON: " + IntegerToString(decision.confluence_score) + " factors aligned - " +
+                  decision.explanation, clrWhite, PRIORITY_IMPORTANT);
+
+        if(decision.passed_count > 0)
+            AddComment("ALIGNED: " + factors_aligned, clrLime, PRIORITY_IMPORTANT);
 
         if(decision.advice != "")
             AddComment("ADVICE: " + decision.advice, clrAqua, PRIORITY_IMPORTANT);
@@ -1089,6 +1154,10 @@ void OnChartEvent(const int id,
                 // Update button visual immediately
                 color bg_color = gui_buttons[i].state ? gui_buttons[i].color_on : gui_buttons[i].color_off;
                 ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_BGCOLOR, bg_color);
+
+                // Set text color: Black for green buttons (ON), White for grey/off buttons
+                color text_color = (gui_buttons[i].state && gui_buttons[i].color_on == clrLime) ? clrBlack : clrWhite;
+                ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_COLOR, text_color);
 
                 string button_text = gui_buttons[i].text + (gui_buttons[i].state ? " [ON]" : " [OFF]");
                 ObjectSetString(0, gui_buttons[i].name, OBJPROP_TEXT, button_text);

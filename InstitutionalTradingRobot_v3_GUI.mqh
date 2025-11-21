@@ -270,7 +270,9 @@ void CreateToggleButton(string name, int x, int y, int width, int height,
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BGCOLOR,
                     initial_state ? col_on : col_off);
-    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_COLOR, clrWhite);
+    // Set text color: Black for green buttons (ON), White for grey/off buttons
+    color text_color = (initial_state && col_on == clrLime) ? clrBlack : clrWhite;
+    ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_COLOR, text_color);
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_BORDER_COLOR, clrWhite);
     ObjectSetString(0, gui_buttons[button_count].name, OBJPROP_FONT, "Arial Bold");
     ObjectSetInteger(0, gui_buttons[button_count].name, OBJPROP_FONTSIZE, 10);
@@ -310,6 +312,10 @@ void UpdateAllButtons()
         // Update background color based on state
         color bg_color = gui_buttons[i].state ? gui_buttons[i].color_on : gui_buttons[i].color_off;
         ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_BGCOLOR, bg_color);
+
+        // Set text color: Black for green buttons (ON), White for grey/off buttons
+        color text_color = (gui_buttons[i].state && gui_buttons[i].color_on == clrLime) ? clrBlack : clrWhite;
+        ObjectSetInteger(0, gui_buttons[i].name, OBJPROP_COLOR, text_color);
 
         // Update button text with state indicator
         string button_text = gui_buttons[i].text + (gui_buttons[i].state ? " [ON]" : " [OFF]");
@@ -387,30 +393,30 @@ void DrawBigCommentary()
     int x = 320;  // Right side of buttons
     int y = 90;   // MOVED DOWN to avoid overlap with title
     int width = 800;
-    int line_height = 26;  // BIGGER line height for readability
-    int max_lines = 30;
+    int line_height = 28;  // Increased line height to prevent overlap
+    int max_lines = 5;  // Only show last 5 actions
 
-    // Background box
+    // Background box - Sized properly for max_lines
     if(ObjectFind(0, box_name) < 0)
     {
         ObjectCreate(0, box_name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
         ObjectSetInteger(0, box_name, OBJPROP_XDISTANCE, x);
         ObjectSetInteger(0, box_name, OBJPROP_YDISTANCE, y);
         ObjectSetInteger(0, box_name, OBJPROP_XSIZE, width);
-        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, max_lines * line_height);
+        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, 50 + max_lines * line_height);  // Added padding for title
         ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'20,20,30');
         ObjectSetInteger(0, box_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
         ObjectSetInteger(0, box_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetInteger(0, box_name, OBJPROP_BACK, true);
     }
 
-    // Title
+    // Title - with better spacing
     string title_name = prefix + "Commentary_Title";
     if(ObjectFind(0, title_name) < 0)
     {
         ObjectCreate(0, title_name, OBJ_LABEL, 0, 0, 0);
         ObjectSetInteger(0, title_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 5);
+        ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 8);  // Increased padding
         ObjectSetInteger(0, title_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetString(0, title_name, OBJPROP_FONT, "Arial Bold");
         ObjectSetInteger(0, title_name, OBJPROP_FONTSIZE, 14);
@@ -418,7 +424,7 @@ void DrawBigCommentary()
         ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrWhite);
     }
 
-    // Draw commentary lines - BIGGER FONT
+    // Draw commentary lines - Clear spacing between lines
     int start_index = MathMax(0, commentary_count - max_lines);
 
     for(int i = start_index; i < commentary_count; i++)
@@ -431,11 +437,11 @@ void DrawBigCommentary()
             ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
             ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
             ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");
-            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 13);  // BIGGER: increased to 13 for better readability
+            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 12);  // Slightly smaller for better fit
         }
 
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 35 + (i - start_index) * line_height);
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 40 + (i - start_index) * line_height);  // More padding after title
         ObjectSetString(0, label_name, OBJPROP_TEXT, commentary_buffer[i].text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, commentary_buffer[i].text_color);
     }
