@@ -61,9 +61,9 @@ void DrawDashboard()
         return;
     }
 
-    // Dashboard now appears on right side, below buttons
-    int x = 1150;  // Right side
-    int y = 50;
+    // Dashboard (Market Status) positioned under Real-Time Analysis
+    int x = 320;   // Aligned with Real-Time Analysis
+    int y = 880;   // Below Real-Time Analysis (which ends around y=870)
     int width = 400;
     int line_height = 22;  // BIGGER line height
 
@@ -232,7 +232,7 @@ void DrawDashboard()
         row++;
 
         CreateLabel("Pattern", x+10, y+40+row*line_height,
-                   active_pattern.name + " [" + IntegerToString(active_pattern.strength) + "★]",
+                   "(H4) " + active_pattern.name + " [" + IntegerToString(active_pattern.strength) + "★]",
                    active_pattern.is_bullish ? clrLime : clrRed, FontSize);
         row++;
 
@@ -242,6 +242,51 @@ void DrawDashboard()
                    dashboard.confluence_score >= dynamic_confluence_required ? clrLime : clrOrange,
                    FontSize);
         row++;
+
+        // Show H1 pattern if different from H4
+        if(has_active_pattern_h1 && active_pattern_h1.name != active_pattern.name)
+        {
+            CreateLabel("PatternH1", x+10, y+40+row*line_height,
+                       "(H1) " + active_pattern_h1.name + " [" + IntegerToString(active_pattern_h1.strength) + "★]",
+                       active_pattern_h1.is_bullish ? clrLime : clrRed, FontSize);
+            row++;
+        }
+
+        // Show M15 pattern if different from H4
+        if(has_active_pattern_m15 && active_pattern_m15.name != active_pattern.name)
+        {
+            CreateLabel("PatternM15", x+10, y+40+row*line_height,
+                       "(M15) " + active_pattern_m15.name + " [" + IntegerToString(active_pattern_m15.strength) + "★]",
+                       active_pattern_m15.is_bullish ? clrLime : clrRed, FontSize);
+            row++;
+        }
+    }
+    else
+    {
+        // No H4 pattern, but show H1 and M15 if they exist
+        if(has_active_pattern_h1 || has_active_pattern_m15)
+        {
+            row++;
+            CreateLabel("Header4", x+10, y+40+row*line_height,
+                       "── ACTIVE PATTERN ──", clrAqua, 12);
+            row++;
+
+            if(has_active_pattern_h1)
+            {
+                CreateLabel("PatternH1Only", x+10, y+40+row*line_height,
+                           "(H1) " + active_pattern_h1.name + " [" + IntegerToString(active_pattern_h1.strength) + "★]",
+                           active_pattern_h1.is_bullish ? clrLime : clrRed, FontSize);
+                row++;
+            }
+
+            if(has_active_pattern_m15)
+            {
+                CreateLabel("PatternM15Only", x+10, y+40+row*line_height,
+                           "(M15) " + active_pattern_m15.name + " [" + IntegerToString(active_pattern_m15.strength) + "★]",
+                           active_pattern_m15.is_bullish ? clrLime : clrRed, FontSize);
+                row++;
+            }
+        }
     }
 
     // Performance Section

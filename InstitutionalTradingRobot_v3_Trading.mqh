@@ -55,6 +55,60 @@ void ScanForCandlestickPatterns()
 }
 
 //+------------------------------------------------------------------+
+//| SCAN FOR PATTERNS ON SPECIFIC TIMEFRAME (Multi-TF Support)      |
+//+------------------------------------------------------------------+
+bool ScanPatternOnTimeframe(ENUM_TIMEFRAMES timeframe, PatternInfo &pattern_out)
+{
+    PatternInfo pattern;
+    bool found = false;
+
+    double o[], h[], l[], c[];
+    ArraySetAsSeries(o, true);
+    ArraySetAsSeries(h, true);
+    ArraySetAsSeries(l, true);
+    ArraySetAsSeries(c, true);
+
+    if(CopyOpen(_Symbol, timeframe, 0, 5, o) <= 0) return false;
+    if(CopyHigh(_Symbol, timeframe, 0, 5, h) <= 0) return false;
+    if(CopyLow(_Symbol, timeframe, 0, 5, l) <= 0) return false;
+    if(CopyClose(_Symbol, timeframe, 0, 5, c) <= 0) return false;
+
+    // Check all patterns (from CandlestickPatterns.mqh)
+    if(!found) found = DetectHammer(1, o, h, l, c, pattern);
+    if(!found) found = DetectShootingStar(1, o, h, l, c, pattern);
+    if(!found) found = DetectEngulfing(1, o, h, l, c, pattern);
+    if(!found) found = DetectMorningStar(1, o, h, l, c, pattern);
+    if(!found) found = DetectEveningStar(1, o, h, l, c, pattern);
+    if(!found) found = DetectThreeWhiteSoldiers(1, o, h, l, c, pattern);
+    if(!found) found = DetectThreeBlackCrows(1, o, h, l, c, pattern);
+    if(!found) found = DetectDoji(1, o, h, l, c, pattern);
+    if(!found) found = DetectMarubozu(1, o, h, l, c, pattern);
+    if(!found) found = DetectHarami(1, o, h, l, c, pattern);
+
+    if(found && pattern.strength >= 2)
+    {
+        pattern_out = pattern;
+        pattern_out.detected_time = TimeCurrent();
+        pattern_out.bar_index = 1;
+        return true;
+    }
+
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| SCAN LOWER TIMEFRAMES (H1 and M15)                              |
+//+------------------------------------------------------------------+
+void ScanLowerTimeframes()
+{
+    // Scan H1
+    has_active_pattern_h1 = ScanPatternOnTimeframe(PERIOD_H1, active_pattern_h1);
+
+    // Scan M15
+    has_active_pattern_m15 = ScanPatternOnTimeframe(PERIOD_M15, active_pattern_m15);
+}
+
+//+------------------------------------------------------------------+
 //| FIX #11: PATTERN VALIDITY CHECK                                  |
 //+------------------------------------------------------------------+
 bool IsPatternValid()

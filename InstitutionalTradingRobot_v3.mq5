@@ -351,9 +351,13 @@ MARKET_BIAS         current_bias = BIAS_NEUTRAL;
 TRADING_SESSION     current_session = SESSION_ASIAN;
 VOLATILITY_REGIME   current_volatility = VOL_NORMAL;
 
-// Pattern & Zones
-PatternInfo         active_pattern;
+// Pattern & Zones (Multi-Timeframe)
+PatternInfo         active_pattern;      // H4 pattern (main timeframe)
 bool                has_active_pattern = false;
+PatternInfo         active_pattern_h1;   // H1 pattern
+bool                has_active_pattern_h1 = false;
+PatternInfo         active_pattern_m15;  // M15 pattern
+bool                has_active_pattern_m15 = false;
 LiquidityZone       liquidity_zones[100];
 int                 liquidity_count = 0;
 FairValueGap        fvg_zones[50];
@@ -763,7 +767,8 @@ void OnTick()
 
     AddComment("─── Phase 3: Pattern Detection ───", clrAqua, PRIORITY_IMPORTANT);
 
-    ScanForCandlestickPatterns();
+    ScanForCandlestickPatterns();  // Scan H4 (main timeframe)
+    ScanLowerTimeframes();         // Scan H1 and M15
 
     if(has_active_pattern)
     {

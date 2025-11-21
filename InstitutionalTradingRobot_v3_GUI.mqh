@@ -385,9 +385,9 @@ void DrawBigCommentary()
     }
 
     int x = 320;  // Right side of buttons
-    int y = 50;
+    int y = 90;   // MOVED DOWN to avoid overlap with title
     int width = 800;
-    int line_height = 24;  // BIGGER line height
+    int line_height = 26;  // BIGGER line height for readability
     int max_lines = 30;
 
     // Background box
@@ -431,7 +431,7 @@ void DrawBigCommentary()
             ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
             ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
             ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");
-            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 11);  // BIGGER: was 8, now 11
+            ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 13);  // BIGGER: increased to 13 for better readability
         }
 
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
@@ -461,7 +461,7 @@ void DrawColorLegend()
     }
 
     int x = 20;
-    int y = 700;  // Bottom left
+    int y = 10;   // Distance from bottom (using CORNER_LEFT_LOWER)
     int width = 280;
     int line_height = 22;
 
@@ -475,55 +475,58 @@ void DrawColorLegend()
         ObjectSetInteger(0, legend_name, OBJPROP_YSIZE, 280);
         ObjectSetInteger(0, legend_name, OBJPROP_BGCOLOR, C'20,20,30');
         ObjectSetInteger(0, legend_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
-        ObjectSetInteger(0, legend_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, legend_name, OBJPROP_CORNER, CORNER_LEFT_LOWER);  // Changed to LOWER
         ObjectSetInteger(0, legend_name, OBJPROP_BACK, false);
     }
 
-    // Title
-    CreateLegendLabel(0, x+10, y+8, "═══ COLOR LEGEND ═══", clrWhite, 11, true);
+    // Build from bottom up - higher row numbers = higher on screen
+    int base_y = y + 10;
 
+    // Order Blocks (bottom of legend)
     int row = 1;
-
-    // Pattern colors
-    CreateColorBox(1, x+10, y+8 + row*line_height, clrLime);
-    CreateLegendLabel(1, x+30, y+8 + row*line_height, "Bullish Pattern", clrLime, 10, false);
+    CreateColorBox(8, x+10, base_y + row*line_height, clrCrimson);
+    CreateLegendLabel(8, x+30, base_y + row*line_height, "Bearish Order Block", clrCrimson, 10, false);
     row++;
 
-    CreateColorBox(2, x+10, y+8 + row*line_height, clrRed);
-    CreateLegendLabel(2, x+30, y+8 + row*line_height, "Bearish Pattern", clrRed, 10, false);
-    row++;
-
-    row++;  // Spacing
-
-    // Liquidity zones
-    CreateColorBox(3, x+10, y+8 + row*line_height, clrRed);
-    CreateLegendLabel(3, x+30, y+8 + row*line_height, "Liquidity High (Sell Side)", clrGold, 10, false);
-    row++;
-
-    CreateColorBox(4, x+10, y+8 + row*line_height, clrBlue);
-    CreateLegendLabel(4, x+30, y+8 + row*line_height, "Liquidity Low (Buy Side)", clrDodgerBlue, 10, false);
+    CreateColorBox(7, x+10, base_y + row*line_height, C'0,100,0');
+    CreateLegendLabel(7, x+30, base_y + row*line_height, "Bullish Order Block", C'0,200,0', 10, false);
     row++;
 
     row++;  // Spacing
 
     // Fair Value Gaps
-    CreateColorBox(5, x+10, y+8 + row*line_height, clrLightGreen);
-    CreateLegendLabel(5, x+30, y+8 + row*line_height, "Bullish FVG (Gap Up)", clrLightGreen, 10, false);
+    CreateColorBox(6, x+10, base_y + row*line_height, clrLightPink);
+    CreateLegendLabel(6, x+30, base_y + row*line_height, "Bearish FVG (Gap Down)", clrLightPink, 10, false);
     row++;
 
-    CreateColorBox(6, x+10, y+8 + row*line_height, clrLightPink);
-    CreateLegendLabel(6, x+30, y+8 + row*line_height, "Bearish FVG (Gap Down)", clrLightPink, 10, false);
+    CreateColorBox(5, x+10, base_y + row*line_height, clrLightGreen);
+    CreateLegendLabel(5, x+30, base_y + row*line_height, "Bullish FVG (Gap Up)", clrLightGreen, 10, false);
     row++;
 
     row++;  // Spacing
 
-    // Order Blocks
-    CreateColorBox(7, x+10, y+8 + row*line_height, C'0,100,0');
-    CreateLegendLabel(7, x+30, y+8 + row*line_height, "Bullish Order Block", C'0,200,0', 10, false);
+    // Liquidity zones
+    CreateColorBox(4, x+10, base_y + row*line_height, clrBlue);
+    CreateLegendLabel(4, x+30, base_y + row*line_height, "Liquidity Low (Buy Side)", clrDodgerBlue, 10, false);
     row++;
 
-    CreateColorBox(8, x+10, y+8 + row*line_height, clrCrimson);
-    CreateLegendLabel(8, x+30, y+8 + row*line_height, "Bearish Order Block", clrCrimson, 10, false);
+    CreateColorBox(3, x+10, base_y + row*line_height, clrRed);
+    CreateLegendLabel(3, x+30, base_y + row*line_height, "Liquidity High (Sell Side)", clrGold, 10, false);
+    row++;
+
+    row++;  // Spacing
+
+    // Pattern colors
+    CreateColorBox(2, x+10, base_y + row*line_height, clrRed);
+    CreateLegendLabel(2, x+30, base_y + row*line_height, "Bearish Pattern", clrRed, 10, false);
+    row++;
+
+    CreateColorBox(1, x+10, base_y + row*line_height, clrLime);
+    CreateLegendLabel(1, x+30, base_y + row*line_height, "Bullish Pattern", clrLime, 10, false);
+    row++;
+
+    // Title (at top)
+    CreateLegendLabel(0, x+10, base_y + row*line_height + 8, "═══ COLOR LEGEND ═══", clrWhite, 11, true);
 }
 
 //+------------------------------------------------------------------+
@@ -536,7 +539,7 @@ void CreateColorBox(int index, int x, int y, color clr)
     if(ObjectFind(0, name) < 0)
     {
         ObjectCreate(0, name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);  // Changed to LOWER
     }
 
     ObjectSetInteger(0, name, OBJPROP_XDISTANCE, x);
@@ -557,8 +560,8 @@ void CreateLegendLabel(int index, int x, int y, string text, color clr, int font
     if(ObjectFind(0, name) < 0)
     {
         ObjectCreate(0, name, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+        ObjectSetInteger(0, name, OBJPROP_CORNER, CORNER_LEFT_LOWER);  // Changed to LOWER
+        ObjectSetInteger(0, name, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);  // Changed to LOWER
         ObjectSetString(0, name, OBJPROP_FONT, bold ? "Arial Bold" : "Arial");
         ObjectSetInteger(0, name, OBJPROP_FONTSIZE, font_size);
     }
