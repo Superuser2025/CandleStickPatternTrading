@@ -894,188 +894,243 @@ void DrawButtonStatus()
 //+------------------------------------------------------------------+
 //| DRAW PRICE ACTION COMMENTARY - Educational Deep Analysis         |
 //+------------------------------------------------------------------+
+//+------------------------------------------------------------------+
+//| INSTITUTIONAL-GRADE PRICE ACTION FEED                             |
+//| Multi-line format, priority-based, newest-first guaranteed        |
+//+------------------------------------------------------------------+
+
 void DrawPriceActionCommentary()
 {
-    string box_name = prefix + "PriceAction_Box";
+    string box_name = prefix + "PriceActionBox";
 
     if(!g_ShowCommentary)
     {
-        // Hide price action commentary
+        // Clean up all objects
         ObjectDelete(0, box_name);
-        ObjectDelete(0, prefix + "PriceAction_Title");
-        ObjectDelete(0, prefix + "PAC_ServerTime");
-        ObjectDelete(0, prefix + "PAC_LocalTime");
-        for(int i = 0; i < 52; i++)  // 50 messages + 2 time headers
+        ObjectDelete(0, prefix + "PAC_Title");
+        ObjectDelete(0, prefix + "PAC_Status");
+        for(int i = 0; i < 300; i++)  // Increased for multi-line messages
         {
-            ObjectDelete(0, prefix + "PAC_" + IntegerToString(i));
+            ObjectDelete(0, prefix + "PAC_L" + IntegerToString(i));
+            ObjectDelete(0, prefix + "PAC_SEP" + IntegerToString(i));
         }
         return;
     }
 
-    int x = 500;   // Moved LEFT to fit wider panel
-    int y = 465;   // Below Real-Time Analysis panel
-    int width = 1100;   // MAXIMUM WIDTH - full messages guaranteed!
-    int line_height = 20;
-    int max_lines = 50;  // Show up to 50 messages
+    // ═══════════════════════════════════════════════════════════
+    // PANEL CONFIGURATION - Professional Layout
+    // ═══════════════════════════════════════════════════════════
+    int x = 10;           // Far LEFT - no overlaps!
+    int y = 400;          // Below other panels
+    int width = 650;      // Moderate width
+    int height = 550;     // Tall panel
+    int max_messages = 15; // Show last 15 messages
+    int lines_per_message = 3; // Each message gets 3 lines
+    int line_height = 16;      // Compact line spacing
+    int message_spacing = 4;   // Extra space between messages
 
-    // Background box - SCROLLABLE COMMENTARY
+    // Background Panel
     if(ObjectFind(0, box_name) < 0)
     {
         ObjectCreate(0, box_name, OBJ_RECTANGLE_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, box_name, OBJPROP_XDISTANCE, x);
-        ObjectSetInteger(0, box_name, OBJPROP_YDISTANCE, y);
-        ObjectSetInteger(0, box_name, OBJPROP_XSIZE, width);
-        ObjectSetInteger(0, box_name, OBJPROP_YSIZE, 500);  // Tall panel
-        ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'10,15,25');  // Dark blue background
-        ObjectSetInteger(0, box_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
         ObjectSetInteger(0, box_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
         ObjectSetInteger(0, box_name, OBJPROP_BACK, true);
+        ObjectSetInteger(0, box_name, OBJPROP_BORDER_TYPE, BORDER_FLAT);
     }
+    ObjectSetInteger(0, box_name, OBJPROP_XDISTANCE, x);
+    ObjectSetInteger(0, box_name, OBJPROP_YDISTANCE, y);
+    ObjectSetInteger(0, box_name, OBJPROP_XSIZE, width);
+    ObjectSetInteger(0, box_name, OBJPROP_YSIZE, height);
+    ObjectSetInteger(0, box_name, OBJPROP_BGCOLOR, C'10,15,25');  // Dark professional background
 
-    // Title
-    string title_name = prefix + "PriceAction_Title";
-    if(ObjectFind(0, title_name) < 0)
+    // ═══════════════════════════════════════════════════════════
+    // HEADER: Title + Live Status
+    // ═══════════════════════════════════════════════════════════
+    string title_label = prefix + "PAC_Title";
+    if(ObjectFind(0, title_label) < 0)
     {
-        ObjectCreate(0, title_name, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, title_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetString(0, title_name, OBJPROP_FONT, "Arial Bold");
-        ObjectSetInteger(0, title_name, OBJPROP_FONTSIZE, 13);
+        ObjectCreate(0, title_label, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, title_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, title_label, OBJPROP_FONT, "Arial Black");
+        ObjectSetInteger(0, title_label, OBJPROP_FONTSIZE, 11);
     }
-    ObjectSetInteger(0, title_name, OBJPROP_XDISTANCE, x + 10);
-    ObjectSetInteger(0, title_name, OBJPROP_YDISTANCE, y + 8);
-    ObjectSetString(0, title_name, OBJPROP_TEXT, "═══ PRICE ACTION COMMENTARY ═══");
-    ObjectSetInteger(0, title_name, OBJPROP_COLOR, clrGold);
+    ObjectSetInteger(0, title_label, OBJPROP_XDISTANCE, x + 10);
+    ObjectSetInteger(0, title_label, OBJPROP_YDISTANCE, y + 8);
+    ObjectSetString(0, title_label, OBJPROP_TEXT, "╔═══ MARKET FEED ═══╗");
+    ObjectSetInteger(0, title_label, OBJPROP_COLOR, clrGold);
 
-    // Server Time Header (Persistent)
-    string server_time_label = prefix + "PAC_ServerTime";
-    if(ObjectFind(0, server_time_label) < 0)
+    // Live Status Line
+    string status_label = prefix + "PAC_Status";
+    if(ObjectFind(0, status_label) < 0)
     {
-        ObjectCreate(0, server_time_label, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, server_time_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetString(0, server_time_label, OBJPROP_FONT, "Arial Bold");
-        ObjectSetInteger(0, server_time_label, OBJPROP_FONTSIZE, 10);
+        ObjectCreate(0, status_label, OBJ_LABEL, 0, 0, 0);
+        ObjectSetInteger(0, status_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+        ObjectSetString(0, status_label, OBJPROP_FONT, "Consolas");
+        ObjectSetInteger(0, status_label, OBJPROP_FONTSIZE, 8);
     }
-    MqlDateTime dt_server;
-    TimeToStruct(TimeCurrent(), dt_server);
-    string server_time_text = StringFormat("Server Time: %02d.%02d.%02d.%02d:%02d",
-                                           dt_server.day, dt_server.mon, dt_server.year % 100,
-                                           dt_server.hour, dt_server.min);
-    ObjectSetInteger(0, server_time_label, OBJPROP_XDISTANCE, x + 10);
-    ObjectSetInteger(0, server_time_label, OBJPROP_YDISTANCE, y + 30);
-    ObjectSetString(0, server_time_label, OBJPROP_TEXT, server_time_text);
-    ObjectSetInteger(0, server_time_label, OBJPROP_COLOR, clrAqua);
+    MqlDateTime dt;
+    TimeToStruct(TimeCurrent(), dt);
+    string status_text = StringFormat("🟢 LIVE | Server: %02d:%02d:%02d", dt.hour, dt.min, dt.sec);
+    ObjectSetInteger(0, status_label, OBJPROP_XDISTANCE, x + 10);
+    ObjectSetInteger(0, status_label, OBJPROP_YDISTANCE, y + 28);
+    ObjectSetString(0, status_label, OBJPROP_TEXT, status_text);
+    ObjectSetInteger(0, status_label, OBJPROP_COLOR, clrLime);
 
-    // Local Computer Time Header (Persistent)
-    string local_time_label = prefix + "PAC_LocalTime";
-    if(ObjectFind(0, local_time_label) < 0)
+    // ═══════════════════════════════════════════════════════════
+    // MESSAGE FEED: Newest on Top, Multi-Line Format
+    // ═══════════════════════════════════════════════════════════
+    int start_y = y + 50;  // Start below header
+    int current_y = start_y;
+    int messages_displayed = 0;
+
+    // Calculate starting index: show last N messages
+    int start_index = MathMax(0, pa_commentary_count - max_messages);
+
+    // CRITICAL: Loop from NEWEST to OLDEST
+    // i starts at HIGHEST index (newest), counts DOWN to start_index (oldest)
+    for(int i = pa_commentary_count - 1; i >= start_index && messages_displayed < max_messages; i--)
     {
-        ObjectCreate(0, local_time_label, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, local_time_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetString(0, local_time_label, OBJPROP_FONT, "Arial Bold");
-        ObjectSetInteger(0, local_time_label, OBJPROP_FONTSIZE, 10);
-    }
-    MqlDateTime dt_local;
-    TimeToStruct(TimeLocal(), dt_local);
-    string local_time_text = StringFormat("Local Time:  %02d.%02d.%02d.%02d:%02d",
-                                          dt_local.day, dt_local.mon, dt_local.year % 100,
-                                          dt_local.hour, dt_local.min);
-    ObjectSetInteger(0, local_time_label, OBJPROP_XDISTANCE, x + 10);
-    ObjectSetInteger(0, local_time_label, OBJPROP_YDISTANCE, y + 50);
-    ObjectSetString(0, local_time_label, OBJPROP_TEXT, local_time_text);
-    ObjectSetInteger(0, local_time_label, OBJPROP_COLOR, clrLightGreen);
+        string message_text = price_action_commentary[i].text;
+        color message_color = price_action_commentary[i].text_color;
+        datetime message_time = price_action_commentary[i].timestamp;
+        int priority = price_action_commentary[i].priority;
 
-    // Clear old commentary labels
-    for(int i = 0; i < 52; i++)
-    {
-        string label_name = prefix + "PAC_" + IntegerToString(i);
-        ObjectDelete(0, label_name);
-    }
+        // Priority indicator
+        string priority_icon = "🟢";
+        string priority_text = "INFO";
+        if(priority == PRIORITY_CRITICAL) { priority_icon = "🔴"; priority_text = "CRITICAL"; }
+        else if(priority == PRIORITY_IMPORTANT) { priority_icon = "🟡"; priority_text = "IMPORTANT"; }
 
-    // Draw commentary lines (newest on top, oldest on bottom)
-    int start_index = MathMax(0, pa_commentary_count - max_lines);
+        // Format timestamp
+        MqlDateTime msg_dt;
+        TimeToStruct(message_time, msg_dt);
+        string time_str = StringFormat("%02d:%02d", msg_dt.hour, msg_dt.min);
 
-    // SIMPLE LOGIC: Loop from NEWEST to OLDEST, assign positions TOP to BOTTOM
-    int display_row = 0;  // Starts at TOP (smallest Y)
-    for(int i = pa_commentary_count - 1; i >= start_index; i--)  // Newest to oldest
-    {
-        // i = pa_commentary_count-1 is NEWEST message → display_row = 0 (TOP)
-        // i = start_index is OLDEST message → display_row = max (BOTTOM)
-        string label_name = prefix + "PAC_" + IntegerToString(display_row);
-
-        // Get the text and check if it's a heading (contains emoji or all caps keywords)
-        string text = price_action_commentary[i].text;
-        bool is_heading = false;
-
-        // Check if it's a heading (starts with emoji or contains patterns like "PRICE", "ORDER BLOCK", etc.)
-        if(StringFind(text, "📍") >= 0 || StringFind(text, "🔊") >= 0 || StringFind(text, "🔇") >= 0 ||
-           StringFind(text, "✓") >= 0 || StringFind(text, "⚡") >= 0 || StringFind(text, "🎯") >= 0 ||
-           StringFind(text, "⛔") >= 0 || StringFind(text, "💥") >= 0 || StringFind(text, "📈") >= 0 ||
-           StringFind(text, "📉") >= 0 || StringFind(text, "🚀") >= 0 || StringFind(text, "🔻") >= 0 ||
-           StringFind(text, "⚠") >= 0 || StringFind(text, "🕯️") >= 0 || StringFind(text, "🟢") >= 0 ||
-           StringFind(text, "🔴") >= 0 || StringFind(text, "⚖️") >= 0 || StringFind(text, "📊") >= 0 ||
-           StringFind(text, "🐌") >= 0 || StringFind(text, "📦") >= 0 ||
-           (StringFind(text, "PRICE") >= 0 && StringFind(text, "RANGE") >= 0) ||
-           (StringFind(text, "ORDER BLOCK") >= 0) ||
-           (StringFind(text, "FVG") >= 0 && StringFind(text, "FILLED") >= 0) ||
-           (StringFind(text, "LIQUIDITY SWEPT") >= 0) ||
-           (StringFind(text, "MARKET STRUCTURE") >= 0) ||
-           (StringFind(text, "BREAK OF STRUCTURE") >= 0) ||
-           (StringFind(text, "CHANGE OF CHARACTER") >= 0) ||
-           (StringFind(text, "VOLUME") >= 0 && StringFind(text, "SPIKE") >= 0) ||
-           (StringFind(text, "PIN BAR") >= 0) ||
-           (StringFind(text, "ENGULFING") >= 0) ||
-           (StringFind(text, "DOJI") >= 0) ||
-           (StringFind(text, "TREND") >= 0) ||
-           (StringFind(text, "MOMENTUM") >= 0) ||
-           (StringFind(text, "VOLATILITY EXPANDING") >= 0) ||
-           (StringFind(text, "CONSOLIDATION") >= 0) ||
-           (StringFind(text, "BREAKOUT") >= 0) ||
-           (StringFind(text, "BREAKDOWN") >= 0) ||
-           (StringFind(text, "Testing EMA200") >= 0))
+        // ─────────────────────────────────────────────────────────
+        // LINE 1: Priority + Time
+        // ─────────────────────────────────────────────────────────
+        string line1_label = prefix + "PAC_L" + IntegerToString(messages_displayed * 3);
+        if(ObjectFind(0, line1_label) < 0)
         {
-            is_heading = true;
+            ObjectCreate(0, line1_label, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, line1_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, line1_label, OBJPROP_FONT, "Arial Bold");
+            ObjectSetInteger(0, line1_label, OBJPROP_FONTSIZE, 9);
         }
+        string line1_text = priority_icon + " " + priority_text + " | " + time_str;
+        ObjectSetInteger(0, line1_label, OBJPROP_XDISTANCE, x + 12);
+        ObjectSetInteger(0, line1_label, OBJPROP_YDISTANCE, current_y);
+        ObjectSetString(0, line1_label, OBJPROP_TEXT, line1_text);
+        ObjectSetInteger(0, line1_label, OBJPROP_COLOR, message_color);
+        current_y += line_height;
 
-        // Add timestamp for headings
-        string display_text = text;
-        if(is_heading && price_action_commentary[i].timestamp > 0)
+        // ─────────────────────────────────────────────────────────
+        // LINE 2 & 3: Message Text (split if too long)
+        // ─────────────────────────────────────────────────────────
+        int max_chars_per_line = 75;  // Fit in 650px width
+        string line2_text = "";
+        string line3_text = "";
+
+        if(StringLen(message_text) <= max_chars_per_line)
         {
-            string time_ago = FormatTimeDifference(price_action_commentary[i].timestamp);
-            display_text = text + "  [" + time_ago + "]";
+            line2_text = message_text;
         }
-
-        ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetInteger(0, label_name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
-
-        // Use bold font for headings
-        if(is_heading)
-            ObjectSetString(0, label_name, OBJPROP_FONT, "Arial Bold");
         else
-            ObjectSetString(0, label_name, OBJPROP_FONT, "Consolas");  // Monospace font for sub-items
+        {
+            // Split at natural break point (space)
+            int split_pos = max_chars_per_line;
+            for(int pos = max_chars_per_line; pos > max_chars_per_line - 20 && pos > 0; pos--)
+            {
+                if(StringGetCharacter(message_text, pos) == ' ')
+                {
+                    split_pos = pos;
+                    break;
+                }
+            }
+            line2_text = StringSubstr(message_text, 0, split_pos);
+            line3_text = StringSubstr(message_text, split_pos + 1);
 
-        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, is_heading ? 10 : 9);
+            // Truncate line3 if still too long
+            if(StringLen(line3_text) > max_chars_per_line)
+            {
+                line3_text = StringSubstr(line3_text, 0, max_chars_per_line - 3) + "...";
+            }
+        }
 
-        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 75 + display_row * line_height);  // Start after time headers
-        ObjectSetString(0, label_name, OBJPROP_TEXT, display_text);
-        ObjectSetInteger(0, label_name, OBJPROP_COLOR, price_action_commentary[i].text_color);
+        // Draw Line 2
+        string line2_label = prefix + "PAC_L" + IntegerToString(messages_displayed * 3 + 1);
+        if(ObjectFind(0, line2_label) < 0)
+        {
+            ObjectCreate(0, line2_label, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, line2_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, line2_label, OBJPROP_FONT, "Consolas");
+            ObjectSetInteger(0, line2_label, OBJPROP_FONTSIZE, 8);
+        }
+        ObjectSetInteger(0, line2_label, OBJPROP_XDISTANCE, x + 16);
+        ObjectSetInteger(0, line2_label, OBJPROP_YDISTANCE, current_y);
+        ObjectSetString(0, line2_label, OBJPROP_TEXT, line2_text);
+        ObjectSetInteger(0, line2_label, OBJPROP_COLOR, clrWhite);
+        current_y += line_height;
 
-        display_row++;  // Move to next row down
+        // Draw Line 3 (if exists)
+        if(StringLen(line3_text) > 0)
+        {
+            string line3_label = prefix + "PAC_L" + IntegerToString(messages_displayed * 3 + 2);
+            if(ObjectFind(0, line3_label) < 0)
+            {
+                ObjectCreate(0, line3_label, OBJ_LABEL, 0, 0, 0);
+                ObjectSetInteger(0, line3_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+                ObjectSetString(0, line3_label, OBJPROP_FONT, "Consolas");
+                ObjectSetInteger(0, line3_label, OBJPROP_FONTSIZE, 8);
+            }
+            ObjectSetInteger(0, line3_label, OBJPROP_XDISTANCE, x + 16);
+            ObjectSetInteger(0, line3_label, OBJPROP_YDISTANCE, current_y);
+            ObjectSetString(0, line3_label, OBJPROP_TEXT, line3_text);
+            ObjectSetInteger(0, line3_label, OBJPROP_COLOR, clrWhite);
+            current_y += line_height;
+        }
+        else
+        {
+            current_y += line_height;  // Keep spacing consistent
+        }
+
+        // Visual separator line
+        current_y += message_spacing;
+        string sep_label = prefix + "PAC_SEP" + IntegerToString(messages_displayed);
+        if(ObjectFind(0, sep_label) < 0)
+        {
+            ObjectCreate(0, sep_label, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, sep_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, sep_label, OBJPROP_FONT, "Arial");
+            ObjectSetInteger(0, sep_label, OBJPROP_FONTSIZE, 8);
+        }
+        ObjectSetInteger(0, sep_label, OBJPROP_XDISTANCE, x + 12);
+        ObjectSetInteger(0, sep_label, OBJPROP_YDISTANCE, current_y);
+        ObjectSetString(0, sep_label, OBJPROP_TEXT, "───────────────────────────────────────");
+        ObjectSetInteger(0, sep_label, OBJPROP_COLOR, C'30,40,60');
+        current_y += 12;
+
+        messages_displayed++;
+
+        // Stop if we've filled the panel
+        if(current_y > y + height - 20) break;
     }
 
-    // Show info message if no commentary yet
+    // Show message if no commentary yet
     if(pa_commentary_count == 0)
     {
-        string label_name = prefix + "PAC_0";
-        ObjectCreate(0, label_name, OBJ_LABEL, 0, 0, 0);
-        ObjectSetInteger(0, label_name, OBJPROP_CORNER, CORNER_LEFT_UPPER);
-        ObjectSetString(0, label_name, OBJPROP_FONT, "Arial");
-        ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, 10);
-        ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 35);
-        ObjectSetString(0, label_name, OBJPROP_TEXT, "Waiting for market activity...");
-        ObjectSetInteger(0, label_name, OBJPROP_COLOR, clrGray);
+        string empty_label = prefix + "PAC_L0";
+        if(ObjectFind(0, empty_label) < 0)
+        {
+            ObjectCreate(0, empty_label, OBJ_LABEL, 0, 0, 0);
+            ObjectSetInteger(0, empty_label, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+            ObjectSetString(0, empty_label, OBJPROP_FONT, "Arial");
+            ObjectSetInteger(0, empty_label, OBJPROP_FONTSIZE, 9);
+        }
+        ObjectSetInteger(0, empty_label, OBJPROP_XDISTANCE, x + 20);
+        ObjectSetInteger(0, empty_label, OBJPROP_YDISTANCE, start_y);
+        ObjectSetString(0, empty_label, OBJPROP_TEXT, "Waiting for market events...");
+        ObjectSetInteger(0, empty_label, OBJPROP_COLOR, clrGray);
     }
 }
 
