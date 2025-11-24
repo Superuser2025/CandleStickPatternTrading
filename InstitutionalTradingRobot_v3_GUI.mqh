@@ -918,13 +918,13 @@ void DrawPriceActionCommentary()
     }
 
     // ═══════════════════════════════════════════════════════════
-    // PANEL CONFIGURATION - CENTER SCREEN, FULL DETAILS
+    // PANEL CONFIGURATION - TRADING FLOOR GRADE
     // ═══════════════════════════════════════════════════════════
     int x = 400;           // CENTER-RIGHT - visible!
     int y = 100;           // Top-middle - easy to see
-    int width = 900;       // WIDE for full detail messages
-    int height = 550;      // Tall panel
-    int max_messages = 15; // Show last 15 messages
+    int width = 1100;      // EXTRA WIDE for 200 char lines
+    int height = 850;      // TALL - show ALL messages
+    int max_messages = 50; // Show 50 messages (was 15 - TOO SMALL!)
     int lines_per_message = 3; // Each message gets 3 lines
     int line_height = 16;      // Compact line spacing
     int message_spacing = 4;   // Extra space between messages
@@ -1027,7 +1027,7 @@ void DrawPriceActionCommentary()
         // ─────────────────────────────────────────────────────────
         // LINE 2 & 3: Message Text (split if too long)
         // ─────────────────────────────────────────────────────────
-        int max_chars_per_line = 110;  // Fit in 900px width - FULL DETAILS!
+        int max_chars_per_line = 200;  // 200 CHARS - MAXIMUM DETAIL!
         string line2_text = "";
         string line3_text = "";
 
