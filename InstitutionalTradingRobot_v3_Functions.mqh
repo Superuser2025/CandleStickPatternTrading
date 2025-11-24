@@ -1400,18 +1400,8 @@ void PerformPriceActionAnalysis()
     // Clear previous commentary
     pa_commentary_count = 0;
 
-    AddPriceActionComment("═══ PRICE ACTION ANALYSIS ═══", clrYellow, PRIORITY_CRITICAL);
-
-    // Show both Server Time and Local Time clearly
-    datetime server_time = TimeCurrent();
-    datetime local_time = TimeLocal();
-
-    AddPriceActionComment("Server Time (MT5): " + TimeToString(server_time, TIME_DATE|TIME_MINUTES), clrCyan, PRIORITY_INFO);
-    AddPriceActionComment("Your Local Time: " + TimeToString(local_time, TIME_DATE|TIME_MINUTES), clrAqua, PRIORITY_INFO);
-    AddPriceActionComment("", clrWhite, PRIORITY_INFO);  // Spacing
-
-    // Run all comprehensive analysis modules
-    AddPriceActionComment("", clrWhite, PRIORITY_INFO);  // Spacing
+    // Note: Server Time and Local Time are displayed as persistent headers in the GUI
+    // No need to add them as commentary messages
 
     // Core price action analysis
     AnalyzePricePosition();
