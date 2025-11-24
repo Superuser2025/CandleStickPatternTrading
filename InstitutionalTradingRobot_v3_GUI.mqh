@@ -918,12 +918,12 @@ void DrawPriceActionCommentary()
     }
 
     // ═══════════════════════════════════════════════════════════
-    // PANEL CONFIGURATION - Professional Layout
+    // PANEL CONFIGURATION - CENTER SCREEN, FULL DETAILS
     // ═══════════════════════════════════════════════════════════
-    int x = 10;           // Far LEFT - no overlaps!
-    int y = 400;          // Below other panels
-    int width = 650;      // Moderate width
-    int height = 550;     // Tall panel
+    int x = 400;           // CENTER-RIGHT - visible!
+    int y = 100;           // Top-middle - easy to see
+    int width = 900;       // WIDE for full detail messages
+    int height = 550;      // Tall panel
     int max_messages = 15; // Show last 15 messages
     int lines_per_message = 3; // Each message gets 3 lines
     int line_height = 16;      // Compact line spacing
@@ -1027,7 +1027,7 @@ void DrawPriceActionCommentary()
         // ─────────────────────────────────────────────────────────
         // LINE 2 & 3: Message Text (split if too long)
         // ─────────────────────────────────────────────────────────
-        int max_chars_per_line = 75;  // Fit in 650px width
+        int max_chars_per_line = 110;  // Fit in 900px width - FULL DETAILS!
         string line2_text = "";
         string line3_text = "";
 
