@@ -914,7 +914,7 @@ void DrawPriceActionCommentary()
 
     int x = 750;   // Right side, below Real-Time Analysis
     int y = 465;   // Below Real-Time Analysis panel
-    int width = 550;
+    int width = 700;   // INCREASED WIDTH for longer commentary text
     int line_height = 20;
     int max_lines = 50;  // Show up to 50 messages
 
@@ -994,13 +994,13 @@ void DrawPriceActionCommentary()
     // Draw commentary lines (newest on top, oldest on bottom)
     int start_index = MathMax(0, pa_commentary_count - max_lines);
 
-    // Loop FORWARD from oldest to newest - draw oldest first, newest last
-    // This ensures newest messages are drawn last and appear on top (Z-order)
-    for(int i = start_index; i < pa_commentary_count; i++)
+    // SIMPLE LOGIC: Loop from NEWEST to OLDEST, assign positions TOP to BOTTOM
+    int display_row = 0;  // Starts at TOP (smallest Y)
+    for(int i = pa_commentary_count - 1; i >= start_index; i--)  // Newest to oldest
     {
-        // Calculate display position: newest at top (0), oldest at bottom (max)
-        int display_index = pa_commentary_count - 1 - i;
-        string label_name = prefix + "PAC_" + IntegerToString(display_index);
+        // i = pa_commentary_count-1 is NEWEST message → display_row = 0 (TOP)
+        // i = start_index is OLDEST message → display_row = max (BOTTOM)
+        string label_name = prefix + "PAC_" + IntegerToString(display_row);
 
         // Get the text and check if it's a heading (contains emoji or all caps keywords)
         string text = price_action_commentary[i].text;
@@ -1057,9 +1057,11 @@ void DrawPriceActionCommentary()
         ObjectSetInteger(0, label_name, OBJPROP_FONTSIZE, is_heading ? 10 : 9);
 
         ObjectSetInteger(0, label_name, OBJPROP_XDISTANCE, x + 10);
-        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 75 + display_index * line_height);  // Start after time headers
+        ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 75 + display_row * line_height);  // Start after time headers
         ObjectSetString(0, label_name, OBJPROP_TEXT, display_text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, price_action_commentary[i].text_color);
+
+        display_row++;  // Move to next row down
     }
 
     // Show info message if no commentary yet
