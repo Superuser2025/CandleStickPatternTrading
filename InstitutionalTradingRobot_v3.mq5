@@ -123,6 +123,13 @@ bool g_ShowDashboard = true;
 bool g_ShowCommentary = true;
 bool g_ShowColorLegend = true;
 
+// Alert Settings
+input bool EnablePopupAlerts = false;        // Enable Pop-up Alerts
+input bool EnableMobileNotifications = false; // Enable Mobile Push Notifications
+input bool AlertOnCritical = true;           // Alert on CRITICAL priority messages
+input bool AlertOnImportant = true;          // Alert on IMPORTANT priority messages
+input bool AlertOnInfo = false;              // Alert on INFO priority messages
+
 //+------------------------------------------------------------------+
 //| INDICATOR HANDLES                                                 |
 //+------------------------------------------------------------------+
@@ -496,7 +503,7 @@ string FormatTimeDifference(datetime past_time)
 //+------------------------------------------------------------------+
 //| Add Price Action Commentary (Educational Detailed Analysis)      |
 //+------------------------------------------------------------------+
-void AddPriceActionComment(string text, color text_color, int priority)
+void AddPriceActionComment(string text, color text_color, int priority, datetime event_time = 0)
 {
     if(!g_ShowCommentary) return;
 
@@ -510,9 +517,33 @@ void AddPriceActionComment(string text, color text_color, int priority)
 
     price_action_commentary[pa_commentary_count].text = text;
     price_action_commentary[pa_commentary_count].text_color = text_color;
-    price_action_commentary[pa_commentary_count].timestamp = TimeCurrent();
+    // Use event_time if provided, otherwise use current time
+    price_action_commentary[pa_commentary_count].timestamp = (event_time > 0) ? event_time : TimeCurrent();
     price_action_commentary[pa_commentary_count].priority = priority;
     pa_commentary_count++;
+
+    // Send alerts based on priority and settings
+    bool should_alert = false;
+    if(priority == PRIORITY_CRITICAL && AlertOnCritical) should_alert = true;
+    else if(priority == PRIORITY_IMPORTANT && AlertOnImportant) should_alert = true;
+    else if(priority == PRIORITY_INFO && AlertOnInfo) should_alert = true;
+
+    if(should_alert)
+    {
+        string alert_msg = _Symbol + ": " + text;
+
+        // Pop-up alert
+        if(EnablePopupAlerts)
+        {
+            Alert(alert_msg);
+        }
+
+        // Mobile push notification
+        if(EnableMobileNotifications)
+        {
+            SendNotification(alert_msg);
+        }
+    }
 }
 
 //+------------------------------------------------------------------+
