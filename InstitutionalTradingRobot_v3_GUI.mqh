@@ -993,14 +993,11 @@ void DrawPriceActionCommentary()
 
     // Draw commentary lines (newest on top, oldest on bottom)
     int start_index = MathMax(0, pa_commentary_count - max_lines);
-    int num_lines_to_display = pa_commentary_count - start_index;
 
-    // Loop FORWARD from oldest to newest, but assign display positions in REVERSE
-    // This puts newest messages at the top (small Y) and oldest at bottom (large Y)
-    for(int i = start_index; i < pa_commentary_count; i++)
+    // Loop BACKWARD from newest to oldest - puts newest at top, oldest at bottom
+    int display_index = 0;
+    for(int i = pa_commentary_count - 1; i >= start_index; i--)
     {
-        // Calculate display_index in REVERSE: newest gets 0 (top), oldest gets max (bottom)
-        int display_index = num_lines_to_display - 1 - (i - start_index);
         string label_name = prefix + "PAC_" + IntegerToString(display_index);
 
         // Get the text and check if it's a heading (contains emoji or all caps keywords)
@@ -1061,6 +1058,8 @@ void DrawPriceActionCommentary()
         ObjectSetInteger(0, label_name, OBJPROP_YDISTANCE, y + 75 + display_index * line_height);  // Start after time headers
         ObjectSetString(0, label_name, OBJPROP_TEXT, display_text);
         ObjectSetInteger(0, label_name, OBJPROP_COLOR, price_action_commentary[i].text_color);
+
+        display_index++;  // Increment for next position down
     }
 
     // Show info message if no commentary yet
