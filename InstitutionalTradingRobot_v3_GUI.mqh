@@ -912,9 +912,9 @@ void DrawPriceActionCommentary()
         return;
     }
 
-    int x = 750;   // Right side, below Real-Time Analysis
+    int x = 500;   // Moved LEFT to fit wider panel
     int y = 465;   // Below Real-Time Analysis panel
-    int width = 950;   // WIDE PANEL for full commentary text (no truncation!)
+    int width = 1100;   // MAXIMUM WIDTH - full messages guaranteed!
     int line_height = 20;
     int max_lines = 50;  // Show up to 50 messages
 
